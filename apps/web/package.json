@@ -16,6 +16,7 @@
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-table": "^8.21.3",
     "@voids/shared": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -16,6 +16,11 @@ import type {
   LibraryResponse,
   TmdbKeyRequest,
   TmdbKeyResponse,
+  ScanResult,
+  Movie,
+  StartSearchResponse,
+  SearchJob,
+  RecommendedResponse,
 } from '@voids/shared';
 import { get, post, put, del } from './client';
 
@@ -23,6 +28,10 @@ export const queryKeys = {
   settings: ['settings'] as const,
   servers: ['servers'] as const,
   version: ['version'] as const,
+  owned: (serverId: string, libraryKey: string) => ['owned', serverId, libraryKey] as const,
+  recommended: (serverId: string, libraryKey: string) =>
+    ['recommended', serverId, libraryKey] as const,
+  job: (jobId: number) => ['job', jobId] as const,
 };
 
 /** GET /api/settings */
@@ -106,5 +115,52 @@ export function useVersion() {
   return useQuery({
     queryKey: queryKeys.version,
     queryFn: () => get<{ version: string }>('/version'),
+  });
+}
+
+/** POST /api/libraries/:serverId/:libraryKey/scan — scan + persist owned movies. */
+export function useScanLibrary() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { serverId: string; libraryKey: string }) =>
+      post<ScanResult>(`/libraries/${vars.serverId}/${vars.libraryKey}/scan`),
+    onSuccess: (_data, vars) =>
+      qc.invalidateQueries({ queryKey: queryKeys.owned(vars.serverId, vars.libraryKey) }),
+  });
+}
+
+/** GET /api/owned/:serverId/:libraryKey — stored owned movies. */
+export function useOwnedMovies(serverId: string | null, libraryKey: string | null) {
+  return useQuery({
+    queryKey: queryKeys.owned(serverId ?? '', libraryKey ?? ''),
+    queryFn: () => get<Movie[]>(`/owned/${serverId}/${libraryKey}`),
+    enabled: Boolean(serverId) && Boolean(libraryKey),
+  });
+}
+
+/** POST /api/search/:serverId/:libraryKey — enqueue a gap search. */
+export function useStartSearch() {
+  return useMutation({
+    mutationFn: (vars: { serverId: string; libraryKey: string }) =>
+      post<StartSearchResponse>(`/search/${vars.serverId}/${vars.libraryKey}`),
+  });
+}
+
+/** GET /api/search/:jobId — job status (used as the WS polling fallback). */
+export function useJobStatus(jobId: number | null, options?: { refetchInterval?: number | false }) {
+  return useQuery({
+    queryKey: queryKeys.job(jobId ?? -1),
+    queryFn: () => get<SearchJob>(`/search/${jobId}`),
+    enabled: jobId != null,
+    refetchInterval: options?.refetchInterval,
+  });
+}
+
+/** GET /api/recommended/:serverId/:libraryKey — the discovered gaps. */
+export function useRecommended(serverId: string | null, libraryKey: string | null) {
+  return useQuery({
+    queryKey: queryKeys.recommended(serverId ?? '', libraryKey ?? ''),
+    queryFn: () => get<RecommendedResponse>(`/recommended/${serverId}/${libraryKey}`),
+    enabled: Boolean(serverId) && Boolean(libraryKey),
   });
 }

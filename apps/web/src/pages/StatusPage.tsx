@@ -84,6 +84,37 @@ export function StatusPage() {
         </div>
       )}
 
+      {!loading && enabledMovieLibraries.length > 0 ? (
+        <div className="mt-8">
+          <h2 className="mb-3 text-lg font-semibold text-slate-100">Movie libraries</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {enabledMovieLibraries.map((lib) => {
+              const server = serverList.find((s) => s.id === lib.serverId);
+              return (
+                <Card key={`${lib.serverId}:${lib.key}`} className="flex flex-col gap-2">
+                  <div>
+                    <div className="font-medium text-slate-100">{lib.title}</div>
+                    <CardDescription>{server?.name ?? lib.serverId}</CardDescription>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link to="/libraries">
+                      <Button size="sm" variant="secondary">
+                        Browse owned
+                      </Button>
+                    </Link>
+                    <Link to="/recommended">
+                      <Button size="sm" variant="secondary">
+                        View voids
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-8 flex flex-wrap gap-3">
         <Link to="/config">
           <Button>Go to Configuration</Button>
