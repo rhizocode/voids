@@ -1,7 +1,10 @@
 services:
   voids:
+    # Build from this repo. To use a published image instead, comment out
+    # `build` and set `image: ghcr.io/OWNER/voids:latest` (placeholder).
     build: .
-    image: voids:dev
+    image: voids:local
+    container_name: voids
     ports:
       - '8484:8484'
     volumes:
@@ -9,6 +12,23 @@ services:
     environment:
       PORT: '8484'
       DATA_DIR: /data
-      DATABASE_PATH: /data/voids.db
+      # Sub-path mount when served behind a reverse proxy (default "/").
       BASE_URL: /
+      # --- Authentication (default: open, for trusted LANs) ---
+      # AUTH_MODE: basic
+      # AUTH_USERNAME: admin
+      # AUTH_PASSWORD: change-me
+      # --- TLS (default: off — terminate at a reverse proxy instead) ---
+      # Set "on" to serve HTTPS with a self-signed cert generated into /data/tls.
+      # TLS: 'off'
+      # --- TMDB token-bucket sustained rate (req/s) ---
+      # TMDB_RATE_LIMIT: '40'
+      # LOG_LEVEL: log
+    healthcheck:
+      test:
+        ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8484/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped

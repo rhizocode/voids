@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+  Unraid Community Apps template for Voids.
+
+  NOTE: the <Repository> / <Registry> below use a PLACEHOLDER image name
+  (ghcr.io/OWNER/voids:latest). Replace OWNER with the real GitHub owner once
+  the image is published.
+-->
+<Container version="2">
+  <Name>Voids</Name>
+  <Repository>ghcr.io/OWNER/voids:latest</Repository>
+  <Registry>https://ghcr.io/OWNER/voids</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support/>
+  <Project>https://github.com/OWNER/voids</Project>
+  <Overview>
+    Voids finds the gaps (voids) in your movie collections: you own a movie but
+    are missing its sequels or other entries in the same collection. It scans
+    Jellyfin and cross-references TMDB to discover missing siblings, then
+    surfaces them for review, RSS (for Radarr), and automation. Background-first
+    with a web UI for configuration and review. Single container, single port
+    (8484). Plex support is planned. Spiritual successor to Gaps by Jason H House.
+  </Overview>
+  <Category>MediaApp:Video Tools:Other</Category>
+  <WebUI>http://[IP]:[PORT:8484]/</WebUI>
+  <TemplateURL/>
+  <Icon>https://jellyfin.org/images/favicon.ico</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Description>
+    Voids finds the missing entries in your movie collections by scanning
+    Jellyfin and querying TMDB. App configuration (TMDB key, Jellyfin server,
+    Radarr, notifications, schedule) is done in the web UI and stored on the
+    /data volume. The /rss feeds can be added to Radarr as a list.
+  </Description>
+
+  <!-- Web UI / API / RSS port -->
+  <Config Name="WebUI Port" Target="8484" Default="8484" Mode="tcp"
+          Description="HTTP(S) port for the web UI, API, WebSocket, and RSS feeds."
+          Type="Port" Display="always" Required="true" Mask="false">8484</Config>
+
+  <!-- Persistent data (SQLite DB + generated TLS certs) -->
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/voids"
+          Mode="rw"
+          Description="Persistent data directory: SQLite database and any generated TLS certs."
+          Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/voids</Config>
+
+  <!-- Optional: sub-path mount when behind a reverse proxy -->
+  <Config Name="BASE_URL" Target="BASE_URL" Default="/"
+          Description="Sub-path mount point when served behind a reverse proxy (default /)."
+          Type="Variable" Display="advanced" Required="false" Mask="false">/</Config>
+
+  <!-- Auth -->
+  <Config Name="AUTH_MODE" Target="AUTH_MODE" Default="none"
+          Description="Auth mode: none (open, trusted LAN) or basic (HTTP Basic). /rss stays public."
+          Type="Variable" Display="always" Required="false" Mask="false">none</Config>
+  <Config Name="AUTH_USERNAME" Target="AUTH_USERNAME" Default="admin"
+          Description="Basic-auth username (only used when AUTH_MODE=basic)."
+          Type="Variable" Display="advanced" Required="false" Mask="false">admin</Config>
+  <Config Name="AUTH_PASSWORD" Target="AUTH_PASSWORD" Default=""
+          Description="Basic-auth password (only used when AUTH_MODE=basic). Hashed on boot, never logged."
+          Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+
+  <!-- TLS -->
+  <Config Name="TLS" Target="TLS" Default="off"
+          Description="off (plain HTTP, terminate TLS at a proxy) or on (self-signed cert into /data/tls)."
+          Type="Variable" Display="advanced" Required="false" Mask="false">off</Config>
+
+  <!-- TMDB tuning -->
+  <Config Name="TMDB_RATE_LIMIT" Target="TMDB_RATE_LIMIT" Default="40"
+          Description="TMDB token-bucket sustained rate, in requests/second."
+          Type="Variable" Display="advanced" Required="false" Mask="false">40</Config>
+
+  <!-- Logging -->
+  <Config Name="LOG_LEVEL" Target="LOG_LEVEL" Default="log"
+          Description="Log level: error | warn | log | debug | verbose. Secrets are always redacted."
+          Type="Variable" Display="advanced" Required="false" Mask="false">log</Config>
+</Container>

@@ -32,10 +32,30 @@ jobs:
     needs: build
     steps:
       - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-      - name: Build image
+
+      # Multi-arch build for amd64 + arm64. Build only on PRs/forks (no secrets
+      # required). On pushes to main, gate a push behind a configured secret so
+      # forks and PRs stay green without credentials.
+      - name: Build (multi-arch, no push)
+        if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: false
-          tags: voids:dev
+          tags: voids:ci
+
+      - name: Build & push (main, if registry configured)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          # Push only when a registry token secret is present; otherwise this is
+          # a build-only verification. Forks never have the secret, so they stay
+          # green.
+          push: ${{ secrets.GHCR_TOKEN != '' }}
+          tags: voids:ci
