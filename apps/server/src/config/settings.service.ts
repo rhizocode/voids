@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import {
   Schedule,
+  resolveScheduleConfig,
   type AuthMode,
   type MovieStatusId,
   type RadarrConfig,
@@ -85,7 +86,7 @@ export class SettingsService {
 
     const set: Partial<typeof settingsTable.$inferInsert> = { updatedAt: new Date() };
     if (partial.tmdbApiKey !== undefined) set.tmdbApiKey = partial.tmdbApiKey;
-    if (partial.schedule !== undefined) set.schedule = partial.schedule;
+    if (partial.schedule !== undefined) set.schedule = resolveScheduleConfig(partial.schedule);
     if (partial.movieStatus !== undefined) set.movieStatus = partial.movieStatus;
     if (partial.connectTimeoutMs !== undefined) set.connectTimeoutMs = partial.connectTimeoutMs;
     if (partial.readTimeoutMs !== undefined) set.readTimeoutMs = partial.readTimeoutMs;

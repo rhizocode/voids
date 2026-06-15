@@ -57,6 +57,14 @@ describe('SettingsService', () => {
     expect(s.schedule.cron).toBe('0 0 4 * * ?');
   });
 
+  it('rejects a schedule with an unknown preset id', () => {
+    expect(() =>
+      service.update({
+        schedule: { enabled: true, mode: 'preset', presetId: 999, cron: '0 0 4 * * ?' },
+      }),
+    ).toThrow();
+  });
+
   it('stores the tmdb api key without exposing a password hash', () => {
     service.setTmdbApiKey('abc123');
     const s = service.get();
