@@ -62,8 +62,9 @@ export class JobRunnerService implements OnApplicationBootstrap {
         return { jobId, status: job.status };
       }
       if (Date.now() > deadline) {
-        this.logger.warn(`enqueueAndWait timed out waiting for job ${jobId}`);
-        return { jobId, status: job?.status ?? 'failed' };
+        this.logger.warn(`enqueueAndWait timed out waiting for job ${jobId}; requesting cancellation`);
+        this.requestCancel(jobId);
+        return { jobId, status: 'cancelled' };
       }
       await new Promise((r) => setTimeout(r, pollMs));
     }
