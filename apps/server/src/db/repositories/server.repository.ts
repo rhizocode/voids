@@ -77,11 +77,13 @@ export class ServerRepository {
   }
 
   deleteServer(id: string): void {
-    this.db.delete(libraries).where(eq(libraries.serverId, id)).run();
-    this.db.delete(ownedMovies).where(eq(ownedMovies.serverId, id)).run();
-    this.db.delete(recommendedMovies).where(eq(recommendedMovies.serverId, id)).run();
-    this.db.delete(searchJobs).where(eq(searchJobs.serverId, id)).run();
-    this.db.delete(mediaServers).where(eq(mediaServers.id, id)).run();
+    this.db.transaction((tx) => {
+      tx.delete(libraries).where(eq(libraries.serverId, id)).run();
+      tx.delete(ownedMovies).where(eq(ownedMovies.serverId, id)).run();
+      tx.delete(recommendedMovies).where(eq(recommendedMovies.serverId, id)).run();
+      tx.delete(searchJobs).where(eq(searchJobs.serverId, id)).run();
+      tx.delete(mediaServers).where(eq(mediaServers.id, id)).run();
+    });
   }
 
   listLibraries(serverId?: string): MediaLibrary[] {
