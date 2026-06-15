@@ -41,6 +41,23 @@ const baseMovie = (overrides: Partial<Movie> = {}): Movie => ({
   ...overrides,
 });
 
+describe('MovieRepository.feedCounts', () => {
+  it('returns per-library counts excluding rejected and ignored', () => {
+    const repo = makeRepo();
+    repo.upsertRecommended(SERVER, 'lib-a', baseMovie({ tmdbId: 1 }));
+    repo.upsertRecommended(SERVER, 'lib-a', baseMovie({ tmdbId: 2 }));
+    repo.upsertRecommended(SERVER, 'lib-b', baseMovie({ tmdbId: 3 }));
+    const [row1] = repo.listRecommended(SERVER, 'lib-a');
+    repo.updateRecommendedStatus(row1.id, 'rejected');
+    const counts = repo.feedCounts();
+    const a = counts.find((r) => r.libraryKey === 'lib-a');
+    const b = counts.find((r) => r.libraryKey === 'lib-b');
+    expect(a?.count).toBe(1);
+    expect(b?.count).toBe(1);
+    expect(counts.every((r) => typeof r.count === 'number')).toBe(true);
+  });
+});
+
 describe('MovieRepository.upsertRecommended', () => {
   describe('idempotency for tmdbId-less recommendations', () => {
     it('does not create a duplicate row when the same imdbId-only recommendation is upserted twice', () => {

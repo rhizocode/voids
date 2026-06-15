@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, inArray, notInArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import type { Movie, RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
 import { DB } from '../db.module';
 import type { DbHandle } from '../client';
@@ -318,17 +318,15 @@ export class MovieRepository {
    */
   feedCounts(): { serverId: string; libraryKey: string; count: number }[] {
     return this.db
-      .select()
+      .select({
+        serverId: recommendedMovies.serverId,
+        libraryKey: recommendedMovies.libraryKey,
+        count: sql<number>`count(*)`,
+      })
       .from(recommendedMovies)
       .where(notInArray(recommendedMovies.status, ['rejected', 'ignored']))
+      .groupBy(recommendedMovies.serverId, recommendedMovies.libraryKey)
       .all()
-      .reduce<{ serverId: string; libraryKey: string; count: number }[]>((acc, row) => {
-        const found = acc.find(
-          (e) => e.serverId === row.serverId && e.libraryKey === row.libraryKey,
-        );
-        if (found) found.count += 1;
-        else acc.push({ serverId: row.serverId, libraryKey: row.libraryKey, count: 1 });
-        return acc;
-      }, []);
+      .map((r) => ({ ...r, count: Number(r.count) }));
   }
 }
