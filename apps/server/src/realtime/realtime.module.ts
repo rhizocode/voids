@@ -1,4 +1,5 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
 import { SearchModule } from '../search/search.module';
 import { RealtimeService } from './realtime.service';
 import { RealtimeGateway } from './realtime.gateway';
@@ -10,7 +11,7 @@ import { RealtimeGateway } from './realtime.gateway';
  * itself as the broadcast sink on init.
  */
 @Module({
-  imports: [forwardRef(() => SearchModule)],
+  imports: [AuthModule, forwardRef(() => SearchModule)],
   providers: [RealtimeService, RealtimeGateway],
   exports: [RealtimeService],
 })
