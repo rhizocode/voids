@@ -212,14 +212,14 @@ export const fakeRssFeeds: RssFeedInfo[] = [
     serverId: 'server-1',
     libraryKey: 'lib-movies',
     title: 'Movies',
-    url: '/rss/server-1/lib-movies',
+    url: '/rss/server-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01',
     count: 3,
   },
   {
     serverId: 'server-1',
     libraryKey: 'lib-4k',
     title: '4K Movies',
-    url: '/rss/server-1/lib-4k',
+    url: '/rss/server-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee02',
     count: 1,
   },
 ];

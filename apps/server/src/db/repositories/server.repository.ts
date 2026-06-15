@@ -1,5 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { MediaLibrary, MediaServer } from '@voids/shared';
 import { DB } from '../db.module';
 import type { DbHandle } from '../client';
@@ -113,6 +114,7 @@ export class ServerRepository {
         collectionType: library.collectionType,
         enabled: library.enabled,
         isDefault: library.isDefault,
+        feedToken: randomUUID(),
       })
       .onConflictDoUpdate({
         target: [libraries.serverId, libraries.key],
@@ -122,9 +124,52 @@ export class ServerRepository {
           collectionType: library.collectionType,
           enabled: library.enabled,
           isDefault: library.isDefault,
+          // feedToken is intentionally omitted: preserve the existing token on sync.
         },
       })
       .run();
+  }
+
+  /**
+   * Assign a feedToken to every library row that still has NULL (existing
+   * installs that pre-date the feed_token column). Safe to call at startup.
+   */
+  backfillFeedTokens(): void {
+    const rows = this.db
+      .select({ serverId: libraries.serverId, key: libraries.key })
+      .from(libraries)
+      .where(isNull(libraries.feedToken))
+      .all();
+    for (const row of rows) {
+      this.db
+        .update(libraries)
+        .set({ feedToken: randomUUID() })
+        .where(and(eq(libraries.serverId, row.serverId), eq(libraries.key, row.key)))
+        .run();
+    }
+  }
+
+  /** Look up a library by its unguessable feed token. */
+  findLibraryByToken(
+    serverId: string,
+    feedToken: string,
+  ): { key: string } | undefined {
+    const row = this.db
+      .select({ key: libraries.key })
+      .from(libraries)
+      .where(and(eq(libraries.serverId, serverId), eq(libraries.feedToken, feedToken)))
+      .get();
+    return row ?? undefined;
+  }
+
+  /** Return the feed token for a library, or undefined if the row has none yet. */
+  findFeedToken(serverId: string, key: string): string | undefined {
+    const row = this.db
+      .select({ feedToken: libraries.feedToken })
+      .from(libraries)
+      .where(and(eq(libraries.serverId, serverId), eq(libraries.key, key)))
+      .get();
+    return row?.feedToken ?? undefined;
   }
 
   updateLibraryFlags(

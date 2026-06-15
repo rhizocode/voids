@@ -24,10 +24,14 @@ describe('RSS page', () => {
     expect(screen.getByText('3 items in feed')).toBeInTheDocument();
     expect(screen.getByText('1 item in feed')).toBeInTheDocument();
 
-    // Absolute URL = origin + server-provided path.
+    // Absolute URL = origin + server-provided path (token-based, not libraryKey).
     const origin = window.location.origin;
-    expect(screen.getByText(`${origin}/rss/server-1/lib-movies`)).toBeInTheDocument();
-    expect(screen.getByText(`${origin}/rss/server-1/lib-4k`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`${origin}/rss/server-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`${origin}/rss/server-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee02`),
+    ).toBeInTheDocument();
   });
 
   it('Copy URL writes the absolute feed URL to the clipboard', async () => {
@@ -44,7 +48,9 @@ describe('RSS page', () => {
     await user.click(copyButtons[0]);
 
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/rss/server-1/lib-movies`);
+      expect(writeText).toHaveBeenCalledWith(
+        `${window.location.origin}/rss/server-1/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01`,
+      );
     });
   });
 

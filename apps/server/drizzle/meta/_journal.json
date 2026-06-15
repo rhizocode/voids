@@ -15,6 +15,13 @@
       "when": 1781513635195,
       "tag": "0001_overrated_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781552572926,
+      "tag": "0002_plain_sunfire",
+      "breakpoints": true
     }
   ]
 }

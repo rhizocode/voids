@@ -13,13 +13,13 @@ export class RssFeedController {
   constructor(private readonly rss: RssService) {}
 
   /** The JSON feed Radarr polls. Always `application/json`, even when empty. */
-  @Get(':serverId/:libraryKey')
+  @Get(':serverId/:feedToken')
   @Header('Content-Type', 'application/json')
   feed(
     @Param('serverId') serverId: string,
-    @Param('libraryKey') libraryKey: string,
+    @Param('feedToken') feedToken: string,
   ): RssItem[] {
-    return this.rss.buildFeed(serverId, libraryKey);
+    return this.rss.buildFeed(serverId, feedToken);
   }
 }
 

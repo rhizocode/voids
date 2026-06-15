@@ -1,0 +1,1 @@
+ALTER TABLE `libraries` ADD `feed_token` text;

@@ -28,6 +28,7 @@ function makeHandle(): DbHandle {
 
 const SERVER = 'srv-1';
 const LIB = 'lib-1';
+const FEED_TOKEN = 'test-feed-token-0000-0000-000000000001';
 
 interface SeedRec {
   title: string;
@@ -60,9 +61,9 @@ describe('RSS feed (e2e)', () => {
     // A library row so /api/rss can resolve a title.
     handle.sqlite
       .prepare(
-        'INSERT INTO libraries (server_id, key, title, type, enabled, is_default) VALUES (?,?,?,?,?,?)',
+        'INSERT INTO libraries (server_id, key, title, type, enabled, is_default, feed_token) VALUES (?,?,?,?,?,?,?)',
       )
-      .run(SERVER, LIB, 'Movies', 'movie', 1, 1);
+      .run(SERVER, LIB, 'Movies', 'movie', 1, 1, FEED_TOKEN);
 
     newId = seedRec(handle, {
       title: 'New Movie',
@@ -122,7 +123,7 @@ describe('RSS feed (e2e)', () => {
   });
 
   it('GET /rss/:s/:k returns only new+approved with exact keys and JSON content-type', async () => {
-    const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${LIB}`).expect(200);
+    const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${FEED_TOKEN}`).expect(200);
     expect(res.headers['content-type']).toContain('application/json');
 
     const titles = res.body.map((i: { title: string }) => i.title).sort();
@@ -159,7 +160,7 @@ describe('RSS feed (e2e)', () => {
       .send({ status: 'rejected' })
       .expect(200);
 
-    const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${LIB}`).expect(200);
+    const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${FEED_TOKEN}`).expect(200);
     const titles = res.body.map((i: { title: string }) => i.title);
     expect(titles).toEqual(['New Movie']);
   });
@@ -185,7 +186,7 @@ describe('RSS feed (e2e)', () => {
       serverId: SERVER,
       libraryKey: LIB,
       title: 'Movies',
-      url: `/rss/${SERVER}/${LIB}`,
+      url: `/rss/${SERVER}/${FEED_TOKEN}`,
       count: 2,
     });
   });
@@ -196,7 +197,7 @@ describe('RSS feed (e2e)', () => {
       .send({ ids: [newId, approvedId], status: 'ignored' })
       .expect(200);
     expect(res.body.updated).toBe(2);
-    const feed = await request(app.getHttpServer()).get(`/rss/${SERVER}/${LIB}`).expect(200);
+    const feed = await request(app.getHttpServer()).get(`/rss/${SERVER}/${FEED_TOKEN}`).expect(200);
     expect(feed.body).toHaveLength(0);
   });
 });

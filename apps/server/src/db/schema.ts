@@ -56,6 +56,7 @@ export const libraries = sqliteTable(
     collectionType: text('collection_type'),
     enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
     isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+    feedToken: text('feed_token'),
   },
   (t) => [primaryKey({ columns: [t.serverId, t.key] })],
 );
