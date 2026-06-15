@@ -67,6 +67,7 @@ export class SettingsService {
     this.db
       .insert(settingsTable)
       .values({ id: SETTINGS_ID, schedule: defaultSchedule(), movieStatus: 1 })
+      .onConflictDoNothing()
       .run();
     const seeded = this.db
       .select()
