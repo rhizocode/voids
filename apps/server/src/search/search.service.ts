@@ -78,16 +78,24 @@ export class SearchService {
         }
         searched.add(key);
 
-        found += await this.processOwnedMovie(
-          serverId,
-          libraryKey,
-          jobId,
-          ownedMovie,
-          ownedKeys,
-          searched,
-          movieStatus,
-          owned.length,
-        );
+        try {
+          found += await this.processOwnedMovie(
+            serverId,
+            libraryKey,
+            jobId,
+            ownedMovie,
+            ownedKeys,
+            searched,
+            movieStatus,
+            owned.length,
+          );
+        } catch (err) {
+          if (err instanceof SearchCancelledError) throw err;
+          const key = movieKey(ownedMovie);
+          this.logger.warn(
+            `Skipping movie ${key}: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
 
         processed += 1;
         this.jobs.update(jobId, { searchedCount: processed });

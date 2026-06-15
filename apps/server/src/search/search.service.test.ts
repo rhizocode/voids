@@ -195,6 +195,32 @@ describe('SearchService gap engine', () => {
     expect(job.searchedCount).toBe(2);
   });
 
+  it('continues the run when one movie TMDB lookup fails', async () => {
+    // Second owned movie whose tmdbId has no fixture -> getMovie throws.
+    const badMovie: Movie = {
+      ...ownedFast,
+      title: 'Bad Movie',
+      tmdbId: 99999,
+      imdbId: null,
+      collectionId: null,
+      mediaItemId: 'jf-99999',
+      mediaItemKey: 'jf-99999',
+    };
+    movies.replaceOwned(SERVER, LIB, [ownedFast, badMovie]);
+    const service = build(MovieStatus.RELEASED.id);
+    const jobId = jobs.create(SERVER, LIB);
+    await service.runSearch(SERVER, LIB, jobId);
+
+    const job = jobs.find(jobId)!;
+    // Run must succeed, not fail, despite the bad movie.
+    expect(job.status).toBe('succeeded');
+    expect(job.totalCount).toBe(2);
+    expect(job.searchedCount).toBe(2);
+    // The good movie's gap must still be recorded.
+    const recs = movies.listRecommended(SERVER, LIB);
+    expect(recs.map((r) => r.tmdbId)).toContain(9799);
+  });
+
   it('warm cache: a second run makes far fewer network calls', async () => {
     const service = build(MovieStatus.RELEASED.id);
     await service.runSearch(SERVER, LIB, jobs.create(SERVER, LIB));
