@@ -32,6 +32,11 @@ import type {
   ScheduleRunResponse,
   MovieStatusResponse,
   UpdateMovieStatusRequest,
+  GetNotificationsResponse,
+  GetNotificationResponse,
+  UpdateNotificationRequest,
+  TestResult,
+  ProviderTestResult,
 } from '@voids/shared';
 import { get, post, put, patch, del } from './client';
 
@@ -47,6 +52,7 @@ export const queryKeys = {
   schedule: ['schedule'] as const,
   schedulePresets: ['schedule', 'presets'] as const,
   movieStatus: ['movieStatus'] as const,
+  notifications: ['notifications'] as const,
 };
 
 /** GET /api/settings */
@@ -309,5 +315,47 @@ export function useUpdateMovieStatus() {
       qc.setQueryData(queryKeys.movieStatus, data);
       void qc.invalidateQueries({ queryKey: queryKeys.movieStatus });
     },
+  });
+}
+
+/** GET /api/notifications — all seven notification provider configs. */
+export function useNotifications() {
+  return useQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: () => get<GetNotificationsResponse>('/notifications'),
+  });
+}
+
+/**
+ * PUT /api/notifications/:provider — persist one provider's enabled flag,
+ * config, and subscribed notification types. The server validates the config
+ * against that provider's schema (400 on mismatch). On success we patch the
+ * cached list entry in place and invalidate `['notifications']`.
+ */
+export function useUpdateNotification(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateNotificationRequest) =>
+      put<GetNotificationResponse>(`/notifications/${id}`, body),
+    onSuccess: (data) => {
+      qc.setQueryData<GetNotificationsResponse>(queryKeys.notifications, (prev) =>
+        prev ? prev.map((p) => (p.id === data.id ? data : p)) : prev,
+      );
+      void qc.invalidateQueries({ queryKey: queryKeys.notifications });
+    },
+  });
+}
+
+/** PUT /api/notifications/:provider/test — send a TEST notification (70/71). */
+export function useTestNotification(id: number) {
+  return useMutation({
+    mutationFn: () => put<TestResult>(`/notifications/${id}/test`),
+  });
+}
+
+/** PUT /api/notifications/test-all — test every enabled provider. */
+export function useTestAll() {
+  return useMutation({
+    mutationFn: () => put<ProviderTestResult[]>('/notifications/test-all'),
   });
 }

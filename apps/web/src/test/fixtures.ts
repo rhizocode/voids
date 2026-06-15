@@ -6,11 +6,19 @@ import type {
   MediaServerView,
   Movie,
   MovieStatusResponse,
+  NotificationProviderConfig,
   RecommendedMovie,
   RssFeedInfo,
   ScheduleConfig,
   SchedulePresetsResponse,
   SettingsResponse,
+} from '@voids/shared';
+import {
+  NOTIFICATION_PROVIDER_NAMES,
+  NotificationProviderId,
+  allNotificationTypes,
+  defaultNotificationConfig,
+  type NotificationProviderId as ProviderId,
 } from '@voids/shared';
 
 export const fakeSettings: SettingsResponse = {
@@ -163,3 +171,26 @@ export const fakeRssFeeds: RssFeedInfo[] = [
     count: 1,
   },
 ];
+
+/**
+ * All seven notification providers at their schema defaults (every config
+ * field empty/default, no subscriptions, disabled). NO real tokens or URLs.
+ */
+export const fakeNotifications: NotificationProviderConfig[] = (
+  Object.values(NotificationProviderId) as ProviderId[]
+).map((id) => ({
+  id,
+  name: NOTIFICATION_PROVIDER_NAMES[id],
+  enabled: false,
+  config: defaultNotificationConfig(id),
+  notificationTypes: [],
+}));
+
+/** One enabled, fully-configured provider (Slack, id 2) with a fake webhook. */
+export const fakeSlackEnabled: NotificationProviderConfig = {
+  id: NotificationProviderId.SLACK,
+  name: NOTIFICATION_PROVIDER_NAMES[NotificationProviderId.SLACK],
+  enabled: true,
+  config: { id: NotificationProviderId.SLACK, webHookUrl: 'https://example.test/fake-webhook' },
+  notificationTypes: allNotificationTypes.filter((t) => t !== 'TEST'),
+};

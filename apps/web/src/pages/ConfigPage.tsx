@@ -4,6 +4,7 @@ import { Card, Tab, TabList, TabPanel, Tabs } from '../components/ui';
 import { TmdbTab } from './config/TmdbTab';
 import { ServersTab } from './config/ServersTab';
 import { ScheduleTab } from './config/ScheduleTab';
+import { NotificationsTab } from './config/NotificationsTab';
 
 function LaterPhasePanel() {
   return (
@@ -38,7 +39,7 @@ export function ConfigPage() {
           <ScheduleTab />
         </TabPanel>
         <TabPanel value="notifications">
-          <LaterPhasePanel />
+          <NotificationsTab />
         </TabPanel>
         <TabPanel value="network">
           <LaterPhasePanel />
