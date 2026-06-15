@@ -22,6 +22,7 @@ export const settings = sqliteTable('settings', {
   authPasswordHash: text('auth_password_hash'),
   connectTimeoutMs: integer('connect_timeout_ms').notNull().default(10000),
   readTimeoutMs: integer('read_timeout_ms').notNull().default(60000),
+  autoPushRadarr: integer('auto_push_radarr', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),
@@ -30,33 +31,39 @@ export const settings = sqliteTable('settings', {
     .default(sql`(unixepoch())`),
 });
 
-export const plexServers = sqliteTable('plex_servers', {
-  machineIdentifier: text('machine_identifier').primaryKey(),
-  friendlyName: text('friendly_name'),
-  plexToken: text('plex_token'),
-  address: text('address').notNull().default('localhost'),
-  port: integer('port').notNull().default(32400),
+/**
+ * A configured media server (Jellyfin / Plex). `id` is the server's own
+ * identifier as reported by the source.
+ */
+export const mediaServers = sqliteTable('media_servers', {
+  id: text('id').primaryKey(),
+  type: text('type').notNull(),
+  name: text('name'),
+  address: text('address').notNull(),
+  port: integer('port').notNull(),
+  useHttps: integer('use_https', { mode: 'boolean' }).notNull().default(false),
+  token: text('token'),
 });
 
-export const plexLibraries = sqliteTable(
-  'plex_libraries',
+export const libraries = sqliteTable(
+  'libraries',
   {
-    machineIdentifier: text('machine_identifier').notNull(),
+    serverId: text('server_id').notNull(),
     key: text('key').notNull(),
     title: text('title'),
     type: text('type'),
-    scanner: text('scanner'),
+    collectionType: text('collection_type'),
     enabled: integer('enabled', { mode: 'boolean' }).notNull().default(false),
     isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
   },
-  (t) => [primaryKey({ columns: [t.machineIdentifier, t.key] })],
+  (t) => [primaryKey({ columns: [t.serverId, t.key] })],
 );
 
 export const ownedMovies = sqliteTable(
   'owned_movies',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    machineIdentifier: text('machine_identifier').notNull(),
+    serverId: text('server_id').notNull(),
     libraryKey: text('library_key').notNull(),
     title: text('title').notNull(),
     year: integer('year'),
@@ -69,13 +76,13 @@ export const ownedMovies = sqliteTable(
     language: text('language').notNull().default('en'),
     overview: text('overview'),
     genres: text('genres', { mode: 'json' }),
-    plexRatingKey: text('plex_rating_key'),
-    plexKey: text('plex_key'),
+    mediaItemId: text('media_item_id'),
+    mediaItemKey: text('media_item_key'),
   },
   (t) => [
     index('owned_movies_tmdb_idx').on(t.tmdbId),
     index('owned_movies_imdb_idx').on(t.imdbId),
-    index('owned_movies_lib_idx').on(t.machineIdentifier, t.libraryKey),
+    index('owned_movies_lib_idx').on(t.serverId, t.libraryKey),
   ],
 );
 
@@ -83,7 +90,7 @@ export const recommendedMovies = sqliteTable(
   'recommended_movies',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    machineIdentifier: text('machine_identifier').notNull(),
+    serverId: text('server_id').notNull(),
     libraryKey: text('library_key').notNull(),
     title: text('title').notNull(),
     year: integer('year'),
@@ -103,7 +110,7 @@ export const recommendedMovies = sqliteTable(
   },
   (t) => [
     index('recommended_movies_tmdb_idx').on(t.tmdbId),
-    index('recommended_movies_lib_idx').on(t.machineIdentifier, t.libraryKey),
+    index('recommended_movies_lib_idx').on(t.serverId, t.libraryKey),
   ],
 );
 
@@ -146,7 +153,7 @@ export const searchJobs = sqliteTable(
   'search_jobs',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    machineIdentifier: text('machine_identifier'),
+    serverId: text('server_id'),
     libraryKey: text('library_key'),
     status: text('status').notNull().default('queued'),
     searchedCount: integer('searched_count').notNull().default(0),
@@ -161,8 +168,8 @@ export const searchJobs = sqliteTable(
 
 export const schema = {
   settings,
-  plexServers,
-  plexLibraries,
+  mediaServers,
+  libraries,
   ownedMovies,
   recommendedMovies,
   movieCache,

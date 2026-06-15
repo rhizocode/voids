@@ -23,7 +23,7 @@
     "resolveJsonModule": true,
     "rootDir": "./src",
     "paths": {
-      "@voids/shared": ["../../packages/shared/src/index.ts"]
+      "@voids/shared": ["../../packages/shared/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts"],

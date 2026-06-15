@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "Movies",
+    "Locations": ["/media/movies"],
+    "CollectionType": "movies",
+    "ItemId": "f137a2dd21bbc1b99aa5c0f6bf02a805"
+  },
+  {
+    "Name": "Shows",
+    "Locations": ["/media/shows"],
+    "CollectionType": "tvshows",
+    "ItemId": "a656b907eb3a73532e40e44b968d0225"
+  }
+]

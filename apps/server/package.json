@@ -6,9 +6,11 @@
   "license": "MIT",
   "main": "dist/main.js",
   "scripts": {
+    "prebuild": "pnpm --filter @voids/shared build",
     "build": "nest build",
     "start": "node dist/main.js",
     "dev": "nest start --watch",
+    "pretypecheck": "pnpm --filter @voids/shared build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "lint": "eslint .",

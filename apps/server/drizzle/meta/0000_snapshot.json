@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cf5c6236-031f-4877-92a9-965ff5f40ee4",
+  "id": "55f02517-61a6-4c16-ae56-ec7c83d8e786",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "collection_cache": {
@@ -42,6 +42,135 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "libraries": {
+      "name": "libraries",
+      "columns": {
+        "server_id": {
+          "name": "server_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "collection_type": {
+          "name": "collection_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "libraries_server_id_key_pk": {
+          "columns": [
+            "server_id",
+            "key"
+          ],
+          "name": "libraries_server_id_key_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "media_servers": {
+      "name": "media_servers",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "port": {
+          "name": "port",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "use_https": {
+          "name": "use_https",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {},
@@ -201,8 +330,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "machine_identifier": {
-          "name": "machine_identifier",
+        "server_id": {
+          "name": "server_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -293,15 +422,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "plex_rating_key": {
-          "name": "plex_rating_key",
+        "media_item_id": {
+          "name": "media_item_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "plex_key": {
-          "name": "plex_key",
+        "media_item_key": {
+          "name": "media_item_key",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -326,128 +455,12 @@
         "owned_movies_lib_idx": {
           "name": "owned_movies_lib_idx",
           "columns": [
-            "machine_identifier",
+            "server_id",
             "library_key"
           ],
           "isUnique": false
         }
       },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "plex_libraries": {
-      "name": "plex_libraries",
-      "columns": {
-        "machine_identifier": {
-          "name": "machine_identifier",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "scanner": {
-          "name": "scanner",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "enabled": {
-          "name": "enabled",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "is_default": {
-          "name": "is_default",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "plex_libraries_machine_identifier_key_pk": {
-          "columns": [
-            "machine_identifier",
-            "key"
-          ],
-          "name": "plex_libraries_machine_identifier_key_pk"
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "plex_servers": {
-      "name": "plex_servers",
-      "columns": {
-        "machine_identifier": {
-          "name": "machine_identifier",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "friendly_name": {
-          "name": "friendly_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "plex_token": {
-          "name": "plex_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "address": {
-          "name": "address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'localhost'"
-        },
-        "port": {
-          "name": "port",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 32400
-        }
-      },
-      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -463,8 +476,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "machine_identifier": {
-          "name": "machine_identifier",
+        "server_id": {
+          "name": "server_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -583,7 +596,7 @@
         "recommended_movies_lib_idx": {
           "name": "recommended_movies_lib_idx",
           "columns": [
-            "machine_identifier",
+            "server_id",
             "library_key"
           ],
           "isUnique": false
@@ -604,8 +617,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "machine_identifier": {
-          "name": "machine_identifier",
+        "server_id": {
+          "name": "server_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -755,6 +768,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": 60000
+        },
+        "auto_push_radarr": {
+          "name": "auto_push_radarr",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
