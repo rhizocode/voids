@@ -1,12 +1,15 @@
 # Voids
 
-[![CI](https://github.com/rhizocode/voids/actions/workflows/ci.yml/badge.svg)](https://github.com/rhizocode/voids/actions/workflows/ci.yml)
-[![Latest version](https://img.shields.io/github/v/tag/rhizocode/voids?label=version&sort=semver)](https://github.com/rhizocode/voids/tags)
-[![Container](https://img.shields.io/badge/ghcr.io-voids-2496ED?logo=docker&logoColor=white)](https://github.com/rhizocode/voids/pkgs/container/voids)
-[![Arch](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-blue)](https://github.com/rhizocode/voids/pkgs/container/voids)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://github.com/rhizocode/voids/pkgs/container/voids)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+<p align="center">
+  <a href="https://github.com/rhizocode/voids/actions/workflows/ci.yml"><img src="https://github.com/rhizocode/voids/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/rhizocode/voids/tags"><img src="https://img.shields.io/github/v/tag/rhizocode/voids?label=version&sort=semver" alt="Latest version"></a>
+  <a href="https://github.com/rhizocode/voids/pkgs/container/voids"><img src="https://img.shields.io/badge/ghcr.io-voids-2496ED?logo=docker&logoColor=white" alt="Container"></a>
+  <a href="https://github.com/rhizocode/voids/pkgs/container/voids"><img src="https://img.shields.io/badge/arch-amd64%20%7C%20arm64-blue" alt="Arch"></a>
+  <br>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+  <a href="https://github.com/rhizocode/voids/pkgs/container/voids"><img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT"></a>
+</p>
 
 **Voids** finds the gaps — the *voids* — in your movie collections. You own a movie but
 are missing its sequels or other entries in the same collection; Voids scans your
