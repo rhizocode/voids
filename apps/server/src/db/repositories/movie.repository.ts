@@ -109,19 +109,45 @@ export class MovieRepository {
    */
   upsertRecommended(serverId: string, libraryKey: string, movie: Movie): void {
     const tmdbId = movie.tmdbId;
-    const existing = tmdbId
-      ? this.db
-          .select()
-          .from(recommendedMovies)
-          .where(
-            and(
-              eq(recommendedMovies.serverId, serverId),
-              eq(recommendedMovies.libraryKey, libraryKey),
-              eq(recommendedMovies.tmdbId, tmdbId),
-            ),
-          )
-          .get()
-      : undefined;
+    let existing: RecommendedRow | undefined;
+    if (tmdbId) {
+      existing = this.db
+        .select()
+        .from(recommendedMovies)
+        .where(
+          and(
+            eq(recommendedMovies.serverId, serverId),
+            eq(recommendedMovies.libraryKey, libraryKey),
+            eq(recommendedMovies.tmdbId, tmdbId),
+          ),
+        )
+        .get();
+    } else if (movie.imdbId) {
+      existing = this.db
+        .select()
+        .from(recommendedMovies)
+        .where(
+          and(
+            eq(recommendedMovies.serverId, serverId),
+            eq(recommendedMovies.libraryKey, libraryKey),
+            eq(recommendedMovies.imdbId, movie.imdbId),
+          ),
+        )
+        .get();
+    } else if (movie.title && movie.year != null) {
+      existing = this.db
+        .select()
+        .from(recommendedMovies)
+        .where(
+          and(
+            eq(recommendedMovies.serverId, serverId),
+            eq(recommendedMovies.libraryKey, libraryKey),
+            eq(recommendedMovies.title, movie.title),
+            eq(recommendedMovies.year, movie.year),
+          ),
+        )
+        .get();
+    }
 
     if (existing) {
       // Preserve status + discoveredAt; refresh enriched metadata.
