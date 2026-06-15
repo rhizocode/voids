@@ -57,7 +57,11 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, Real
     for (const client of this.server.clients as Set<WebSocket>) {
       // 1 === WebSocket.OPEN
       if (client.readyState === 1) {
-        client.send(message);
+        try {
+          client.send(message);
+        } catch (err) {
+          this.logger.warn(`broadcast send failed: ${err}`);
+        }
       }
     }
   }
