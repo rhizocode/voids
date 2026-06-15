@@ -60,6 +60,22 @@ describe('Libraries page', () => {
     });
   });
 
+  it('shows an error card when the owned-movies fetch fails', async () => {
+    vi.mocked(client.get).mockImplementation((path: string) => {
+      if (path === '/servers') return Promise.resolve(fakeServers as never);
+      if (path.startsWith('/owned/')) return Promise.reject(new Error('Network error'));
+      return Promise.resolve(undefined as never);
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<LibrariesPage />);
+    await selectMovieLibrary(user);
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not load owned movies.')).toBeInTheDocument();
+    });
+  });
+
   it('toggles to the table view', async () => {
     const user = userEvent.setup();
     renderWithProviders(<LibrariesPage />);

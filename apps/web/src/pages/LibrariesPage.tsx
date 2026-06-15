@@ -72,6 +72,8 @@ export function LibrariesPage() {
         <div className="flex items-center gap-2 text-slate-400">
           <Spinner /> Loading owned movies…
         </div>
+      ) : owned.isError ? (
+        <Card className="text-sm text-red-300">Could not load owned movies.</Card>
       ) : movies.length === 0 ? (
         <Card className="text-center text-slate-400">
           <p className="text-slate-300">No owned movies yet.</p>
