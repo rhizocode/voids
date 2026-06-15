@@ -150,10 +150,20 @@ export class TmdbClient {
     return url.toString();
   }
 
+  /** The configured read timeout (ms) from network settings, if available. */
+  private get readTimeoutMs(): number | undefined {
+    return this.settings?.get().readTimeoutMs;
+  }
+
   private get<T>(path: string, params: Record<string, string | undefined>): Promise<T> {
     const url = this.buildUrl(path, params);
+    const timeoutMs = this.readTimeoutMs;
     return this.limiter.run(() =>
-      fetchJson<T>(url, { method: 'GET', headers: { Accept: 'application/json' } }),
+      fetchJson<T>(
+        url,
+        { method: 'GET', headers: { Accept: 'application/json' } },
+        { timeoutMs },
+      ),
     );
   }
 

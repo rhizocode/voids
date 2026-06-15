@@ -120,6 +120,13 @@ export interface FetchRetryOptions {
   sleep?: (ms: number) => Promise<void>;
   /** Fetch implementation (overridable for tests). */
   fetchImpl?: typeof fetch;
+  /**
+   * Per-attempt timeout (ms). When set, each fetch attempt is aborted after
+   * this long. Sourced from the configurable network settings so TMDB calls
+   * honor the same read timeout as the media/Radarr clients. `undefined` = no
+   * timeout (rely on the platform default).
+   */
+  timeoutMs?: number;
 }
 
 const defaultSleep = (ms: number): Promise<void> =>
@@ -148,11 +155,18 @@ export async function fetchJson<T>(
   const baseDelayMs = options.baseDelayMs ?? 1000;
   const sleep = options.sleep ?? defaultSleep;
   const doFetch = options.fetchImpl ?? fetch;
+  const timeoutMs = options.timeoutMs;
 
   let attempt = 0;
   for (;;) {
+    const controller = timeoutMs != null ? new AbortController() : undefined;
+    const timer =
+      controller != null ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
     try {
-      const res = await doFetch(url, init);
+      const res = await doFetch(
+        url,
+        controller != null ? { ...init, signal: controller.signal } : init,
+      );
       if (res.status === 429 && attempt < maxRetries) {
         const delay = parseRetryAfter(res.headers.get('retry-after'), baseDelayMs);
         attempt += 1;
@@ -172,6 +186,8 @@ export async function fetchJson<T>(
         continue;
       }
       throw err;
+    } finally {
+      if (timer != null) clearTimeout(timer);
     }
   }
 }

@@ -1,5 +1,7 @@
 export * from './payload-result';
 export * from './settings.dto';
+export * from './auth.dto';
+export * from './network.dto';
 export * from './tmdb.dto';
 export * from './server.dto';
 export * from './search.dto';

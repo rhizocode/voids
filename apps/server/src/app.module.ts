@@ -13,6 +13,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from './schedule/schedule.module';
 import { RadarrModule } from './radarr/radarr.module';
 import { MislabeledModule } from './mislabeled/mislabeled.module';
+import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
+import { NetworkModule } from './network/network.module';
 
 // The built web SPA lives at apps/web/dist. Resolve relative to this file so it
 // works from src (dev) and dist (production: dist/app.module.js -> ../../web/dist).
@@ -22,8 +25,11 @@ const webRoot = join(__dirname, '..', '..', 'web', 'dist');
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DbModule,
+    AuthModule,
     HealthModule,
     ConfigSettingsModule,
+    NetworkModule,
+    AdminModule,
     NotificationsModule,
     LibraryModule,
     SearchModule,
