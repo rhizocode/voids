@@ -1,3 +1,4 @@
+export * from './admin.dto';
 export * from './payload-result';
 export * from './settings.dto';
 export * from './auth.dto';

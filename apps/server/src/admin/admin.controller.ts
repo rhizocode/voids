@@ -1,6 +1,7 @@
-import { Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import type { PayloadResult } from '@voids/shared';
 import { AdminService } from './admin.service';
+import { NukeDto } from './dto';
 
 /**
  * Admin endpoints. `POST /api/nuke` is the destructive reset. Guarded by the
@@ -13,7 +14,7 @@ export class AdminController {
 
   @Post('nuke')
   @HttpCode(HttpStatus.OK)
-  nuke(): PayloadResult {
+  nuke(@Body() _body: NukeDto): PayloadResult {
     return this.admin.nuke();
   }
 }

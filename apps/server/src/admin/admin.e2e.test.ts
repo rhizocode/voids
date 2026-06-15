@@ -82,13 +82,23 @@ describe('Admin nuke (e2e)', () => {
     handle.sqlite.close();
   });
 
+  const nukeBody = { confirm: 'nuke' };
+
+  it('rejects nuke without confirmation body (400)', async () => {
+    await request(app.getHttpServer()).post('/api/nuke').expect(400);
+  });
+
+  it('rejects nuke with wrong confirmation value (400)', async () => {
+    await request(app.getHttpServer()).post('/api/nuke').send({ confirm: 'yes' }).expect(400);
+  });
+
   it('POST /api/nuke returns NUKE_SUCCESSFUL(30)', async () => {
-    const res = await request(app.getHttpServer()).post('/api/nuke').expect(200);
+    const res = await request(app.getHttpServer()).post('/api/nuke').send(nukeBody).expect(200);
     expect(res.body.code).toBe(30);
   });
 
   it('wipes all data tables', async () => {
-    await request(app.getHttpServer()).post('/api/nuke').expect(200);
+    await request(app.getHttpServer()).post('/api/nuke').send(nukeBody).expect(200);
     const { db } = handle;
     expect(db.select().from(mediaServers).all()).toHaveLength(0);
     expect(db.select().from(libraries).all()).toHaveLength(0);
@@ -100,7 +110,7 @@ describe('Admin nuke (e2e)', () => {
   });
 
   it('re-seeds the 7 notification providers (disabled, defaults)', async () => {
-    await request(app.getHttpServer()).post('/api/nuke').expect(200);
+    await request(app.getHttpServer()).post('/api/nuke').send(nukeBody).expect(200);
     const rows = handle.db.select().from(notificationProviders).all();
     expect(rows).toHaveLength(7);
     expect(rows.every((r) => r.enabled === false)).toBe(true);
@@ -108,7 +118,7 @@ describe('Admin nuke (e2e)', () => {
   });
 
   it('resets settings to defaults', async () => {
-    await request(app.getHttpServer()).post('/api/nuke').expect(200);
+    await request(app.getHttpServer()).post('/api/nuke').send(nukeBody).expect(200);
     const row = handle.db.select().from(settingsTable).all();
     expect(row).toHaveLength(1);
     expect(row[0].tmdbApiKey).toBeNull();
