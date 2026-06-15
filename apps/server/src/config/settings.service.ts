@@ -4,7 +4,7 @@ import {
   Schedule,
   type AuthMode,
   type MovieStatusId,
-  type ScheduleSelection,
+  type ScheduleConfig,
   type Settings,
 } from '@voids/shared';
 import { DB } from '../db/db.module';
@@ -13,14 +13,16 @@ import { settings as settingsTable } from '../db/schema';
 
 const SETTINGS_ID = 1;
 
-/** The default schedule selection used on first read (weekly, Mondays). */
-function defaultSchedule(): ScheduleSelection {
+/**
+ * The default schedule config used on first read: a weekly (Monday 4am) preset,
+ * registered/enabled by default so a fresh install runs headless out of the box.
+ */
+function defaultSchedule(): ScheduleConfig {
   return {
-    id: Schedule.EVERY_MONDAY.id,
-    label: Schedule.EVERY_MONDAY.label,
+    enabled: true,
+    mode: 'preset',
+    presetId: Schedule.EVERY_MONDAY.id,
     cron: Schedule.EVERY_MONDAY.cron,
-    enabled: Schedule.EVERY_MONDAY.enabled,
-    custom: false,
   };
 }
 
@@ -37,7 +39,7 @@ export class SettingsService {
 
   /** Map a DB row to the API-facing Settings (never exposes the password hash). */
   private toSettings(row: SettingsRow): Settings {
-    const schedule = (row.schedule as ScheduleSelection | null) ?? defaultSchedule();
+    const schedule = (row.schedule as ScheduleConfig | null) ?? defaultSchedule();
     return {
       tmdbApiKey: row.tmdbApiKey,
       schedule,

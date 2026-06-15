@@ -104,6 +104,7 @@ describe('SearchService gap engine', () => {
       settings as never,
       cache,
       realtime,
+      { notify: async () => {} } as never,
     );
   }
 

@@ -26,6 +26,7 @@ import { JobRunnerService } from './job-runner.service';
 import { SearchController } from './search.controller';
 import { LibraryService } from '../library/library.service';
 import { LibraryController } from '../library/library.controller';
+import { NotificationService } from '../notifications/notification.service';
 
 const fx = (name: string): unknown =>
   JSON.parse(readFileSync(join(__dirname, '__fixtures__', name), 'utf8'));
@@ -112,6 +113,7 @@ describe('Search pipeline (e2e)', () => {
         ServerRepository,
         MovieRepository,
         SearchJobRepository,
+        NotificationService,
         { provide: DB, useValue: handle },
         { provide: MediaSourceRegistry, useValue: fakeRegistry },
         { provide: TmdbClient, useClass: FakeTmdbClient },

@@ -33,7 +33,10 @@ describe('SettingsService', () => {
     expect(s.movieStatus).toBe(1);
     expect(s.authMode).toBe('none');
     expect(s.autoPushRadarr).toBe(false);
-    expect(s.schedule.label).toBe('Weekly');
+    expect(s.schedule.enabled).toBe(true);
+    expect(s.schedule.mode).toBe('preset');
+    expect(s.schedule.presetId).toBe(2);
+    expect(s.schedule.cron).toBe('0 0 4 * * MON');
     expect(s.connectTimeoutMs).toBeGreaterThan(0);
   });
 
@@ -44,11 +47,14 @@ describe('SettingsService', () => {
     expect(s.autoPushRadarr).toBe(true);
   });
 
-  it('updates the schedule selection', () => {
+  it('updates the schedule config', () => {
     service.update({
-      schedule: { id: 1, label: 'Daily', cron: '0 0 4 * * ?', enabled: true, custom: false },
+      schedule: { enabled: true, mode: 'preset', presetId: 1, cron: '0 0 4 * * ?' },
     });
-    expect(service.get().schedule.label).toBe('Daily');
+    const s = service.get();
+    expect(s.schedule.mode).toBe('preset');
+    expect(s.schedule.presetId).toBe(1);
+    expect(s.schedule.cron).toBe('0 0 4 * * ?');
   });
 
   it('stores the tmdb api key without exposing a password hash', () => {

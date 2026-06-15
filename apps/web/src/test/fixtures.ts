@@ -12,7 +12,7 @@ import type {
 
 export const fakeSettings: SettingsResponse = {
   tmdbApiKey: null,
-  schedule: { id: 1, label: 'Daily', cron: '0 0 4 * * ?', enabled: true, custom: false },
+  schedule: { enabled: true, mode: 'preset', presetId: 1, cron: '0 0 4 * * ?' },
   movieStatus: 0,
   connectTimeoutMs: 10000,
   readTimeoutMs: 30000,

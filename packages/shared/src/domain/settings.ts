@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { scheduleSelectionSchema } from '../enums/schedule';
+import { scheduleConfigSchema } from '../enums/schedule';
 import { movieStatusIdSchema } from '../enums/movie-status';
 
 /**
@@ -16,7 +16,7 @@ export type AuthMode = z.infer<typeof authModeSchema>;
  */
 export const settingsSchema = z.object({
   tmdbApiKey: z.string().nullable(),
-  schedule: scheduleSelectionSchema,
+  schedule: scheduleConfigSchema,
   movieStatus: movieStatusIdSchema,
   connectTimeoutMs: z.number().int(),
   readTimeoutMs: z.number().int(),

@@ -6,3 +6,5 @@ export * from './search.dto';
 export * from './recommendation.dto';
 export * from './rss.dto';
 export * from './realtime.dto';
+export * from './schedule.dto';
+export * from './movie-status.dto';

@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   MovieStatus,
+  NotificationType,
   Payload,
   movieKey,
   type CollectionMember,
@@ -10,6 +11,7 @@ import { MovieRepository } from '../db/repositories/movie.repository';
 import { SearchJobRepository } from '../db/repositories/search-job.repository';
 import { SettingsService } from '../config/settings.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { NotificationService } from '../notifications/notification.service';
 import {
   TmdbCacheService,
 } from '../tmdb/tmdb-cache.service';
@@ -38,6 +40,7 @@ export class SearchService {
     private readonly settings: SettingsService,
     private readonly tmdb: TmdbCacheService,
     private readonly realtime: RealtimeService,
+    private readonly notifications: NotificationService,
   ) {}
 
   /** Run a search for one library, persisting progress/results as it goes. */
@@ -57,6 +60,7 @@ export class SearchService {
 
     const movieStatus = this.settings.get().movieStatus;
     let processed = 0;
+    let found = 0;
 
     try {
       for (const ownedMovie of owned) {
@@ -74,7 +78,7 @@ export class SearchService {
         }
         searched.add(key);
 
-        await this.processOwnedMovie(
+        found += await this.processOwnedMovie(
           serverId,
           libraryKey,
           jobId,
@@ -96,7 +100,10 @@ export class SearchService {
         payloadCode: Payload.SEARCH_SUCCESSFUL.code,
         reason: Payload.SEARCH_SUCCESSFUL.reason,
       });
-      // TODO(phase-3/5): write RSS feed + fire GAPS_MISSING_COLLECTIONS notification here.
+      // Fire the search-finished notification with the count of gaps found this
+      // run (brief §4.5). Decoupled: the stub just logs today; Phase 5 fans out.
+      // TODO(phase-5): RSS feed is written incrementally elsewhere; nothing here.
+      await this.notifyFinished(serverId, libraryKey, found);
     } catch (err) {
       if (err instanceof SearchCancelledError) {
         this.jobs.update(jobId, { status: 'cancelled', finishedAt: new Date() });
@@ -118,7 +125,10 @@ export class SearchService {
     }
   }
 
-  /** Resolve, fetch collection, and record any missing parts for one owned movie. */
+  /**
+   * Resolve, fetch collection, and record any missing parts for one owned
+   * movie. Returns the number of new recommendations found for this movie.
+   */
   private async processOwnedMovie(
     serverId: string,
     libraryKey: string,
@@ -128,13 +138,14 @@ export class SearchService {
     searched: Set<string>,
     movieStatus: number,
     total: number,
-  ): Promise<void> {
+  ): Promise<number> {
     const resolved = await this.resolveCollectionId(ownedMovie);
-    if (resolved == null) return; // no collection -> no siblings
+    if (resolved == null) return 0; // no collection -> no siblings
 
     const collection = await this.tmdb.getCollection(resolved);
-    if (!collection) return; // not found (status_code 34) or empty
+    if (!collection) return 0; // not found (status_code 34) or empty
 
+    let found = 0;
     for (const part of collection.parts) {
       const partKeyInput = { tmdbId: part.id, imdbId: null, year: part.year, title: part.title };
       const partKey = movieKey(partKeyInput);
@@ -155,9 +166,37 @@ export class SearchService {
       const recommended = this.buildRecommended(part, details, collection);
       this.movies.upsertRecommended(serverId, libraryKey, recommended);
       searched.add(partKey);
+      found += 1;
 
       // A gap was found — emit progress carrying the movie payload.
       this.emitProgress(jobId, this.jobs.find(jobId)?.searchedCount ?? 0, total, recommended);
+    }
+    return found;
+  }
+
+  /**
+   * Fire the GAPS_MISSING_COLLECTIONS notification after a successful run.
+   * Decoupled hook point (brief §4.5): the stub logs today; Phase 5 fans out to
+   * the configured providers. Never throws into the run.
+   */
+  private async notifyFinished(
+    serverId: string,
+    libraryKey: string,
+    found: number,
+  ): Promise<void> {
+    try {
+      await this.notifications.notify(
+        NotificationType.GAPS_MISSING_COLLECTIONS,
+        'info',
+        'Gap search finished',
+        found > 0
+          ? `Found ${found} missing movie(s) for library ${serverId}/${libraryKey}.`
+          : `No new gaps found for library ${serverId}/${libraryKey}.`,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Notification dispatch failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
