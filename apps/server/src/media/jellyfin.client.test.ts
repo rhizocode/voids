@@ -53,6 +53,16 @@ describe('mapJellyfinItemToMovie', () => {
     expect(movie.genres).toEqual([]);
     expect(movie.tmdbId).toBeNull();
   });
+
+  it('treats a Tmdb ProviderIds value of "0" as null (dirty metadata)', () => {
+    const movie = mapJellyfinItemToMovie({
+      Id: 'x',
+      Name: 'Dirty Meta',
+      ProviderIds: { Tmdb: '0', TmdbCollection: '0' },
+    });
+    expect(movie.tmdbId).toBeNull();
+    expect(movie.collectionId).toBeNull();
+  });
 });
 
 describe('mapJellyfinVirtualFolders', () => {

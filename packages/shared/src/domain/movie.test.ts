@@ -34,6 +34,18 @@ describe('movieKey', () => {
     );
   });
 
+  it('treats tmdbId of 0 as absent and falls through to imdbId', () => {
+    expect(movieKey(make({ tmdbId: 0, imdbId: 'tt0133093', year: 1999, title: 'The Matrix' }))).toBe(
+      'imdb:tt0133093',
+    );
+  });
+
+  it('treats negative tmdbId as absent and falls through to year+title', () => {
+    expect(movieKey(make({ tmdbId: -1, year: 1999, title: 'The Matrix' }))).toBe(
+      'yt:1999:The Matrix',
+    );
+  });
+
   it('treats an empty imdbId as absent and falls through to year+title', () => {
     expect(movieKey(make({ imdbId: '', year: 1999, title: 'The Matrix' }))).toBe(
       'yt:1999:The Matrix',

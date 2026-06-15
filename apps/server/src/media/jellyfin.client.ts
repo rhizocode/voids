@@ -43,7 +43,7 @@ const DEFAULT_READ_TIMEOUT_MS = 60000;
 function parseProviderInt(value: string | undefined): number | null {
   if (value == null || value === '') return null;
   const n = Number(value);
-  return Number.isNaN(n) ? null : n;
+  return Number.isNaN(n) || n <= 0 ? null : n;
 }
 
 /** Map a single Jellyfin item to the shared `Movie` domain type. */

@@ -55,7 +55,7 @@ export function normalizeTitle(title: string): string {
  * Used everywhere ownership / dedup is checked.
  */
 export function movieKey(m: Pick<Movie, 'tmdbId' | 'imdbId' | 'year' | 'title'>): string {
-  if (m.tmdbId != null) return `tmdb:${m.tmdbId}`;
+  if (m.tmdbId != null && m.tmdbId > 0) return `tmdb:${m.tmdbId}`;
   if (m.imdbId != null && m.imdbId !== '') return `imdb:${m.imdbId}`;
   return `yt:${m.year ?? ''}:${normalizeTitle(m.title)}`;
 }
