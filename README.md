@@ -257,6 +257,40 @@ See [`projectBrief.md`](./projectBrief.md) for the full architecture and design 
 
 ---
 
+## Releasing & versioning
+
+**The git tag is the single source of truth for the version.** It is injected at
+build time — there is no runtime lookup — and flows to both halves of the app from
+one `APP_VERSION` build arg:
+
+- **Web:** Vite's `define` bakes it into the bundle as `__APP_VERSION__`
+  (`apps/web/vite.config.ts`). The **About** page and **Config → Advanced** tab
+  render this constant directly.
+- **Server:** `GET /api/version` reports `process.env.APP_VERSION`
+  (`apps/server/src/health/health.controller.ts`), kept as a machine-readable
+  endpoint for health checks and support.
+
+`scripts/release.sh` derives the version with `git describe --tags` and passes it
+through the Docker build (`docker-compose.yml` forwards it as the `APP_VERSION`
+build arg). When the arg is absent — local `vite dev`, an ad-hoc `docker build` —
+the version falls back to `<package.json version>-dev` / `0.0.0-untagged`, so an
+untagged build is always visibly distinguishable from a real release.
+
+### Cutting a release
+
+```bash
+pnpm version 0.3.0          # bumps the root package.json, commits, and tags v0.3.0
+git push --follow-tags      # pushes the commit and the tag together
+scripts/release.sh          # builds the image stamped from the git tag
+```
+
+> **Note:** `pnpm version` only bumps the **root** `package.json`. To keep the
+> workspace packages (`apps/*`, `packages/*`) in sync, bump their `version` fields
+> in the same commit. The displayed version comes from the git tag regardless, so
+> this is for manifest consistency rather than what users see.
+
+---
+
 ## Attribution & license
 
 Voids is licensed under the **MIT License** — see [LICENSE](./LICENSE).
