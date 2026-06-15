@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import { PageHeader } from '../components/PageHeader';
-import { Card, Tab, TabList, TabPanel, Tabs } from '../components/ui';
+import { Tab, TabList, TabPanel, Tabs } from '../components/ui';
 import { TmdbTab } from './config/TmdbTab';
 import { ServersTab } from './config/ServersTab';
 import { ScheduleTab } from './config/ScheduleTab';
 import { NotificationsTab } from './config/NotificationsTab';
 import { RadarrTab } from './config/RadarrTab';
-
-function LaterPhasePanel() {
-  return (
-    <Card className="text-sm text-slate-400">Configured in a later phase.</Card>
-  );
-}
+import { NetworkTab } from './config/NetworkTab';
+import { AdvancedTab } from './config/AdvancedTab';
 
 export function ConfigPage() {
   const [tab, setTab] = useState('tmdb');
@@ -47,10 +43,10 @@ export function ConfigPage() {
           <RadarrTab />
         </TabPanel>
         <TabPanel value="network">
-          <LaterPhasePanel />
+          <NetworkTab />
         </TabPanel>
         <TabPanel value="advanced">
-          <LaterPhasePanel />
+          <AdvancedTab />
         </TabPanel>
       </Tabs>
     </div>

@@ -43,6 +43,10 @@ import type {
   RadarrRootFoldersResponse,
   RadarrPushResponse,
   MislabeledResponse,
+  NetworkSettings,
+  UpdateNetworkRequest,
+  AuthModeResponse,
+  PayloadResult,
 } from '@voids/shared';
 import { get, post, put, patch, del } from './client';
 
@@ -50,6 +54,8 @@ export const queryKeys = {
   settings: ['settings'] as const,
   servers: ['servers'] as const,
   version: ['version'] as const,
+  network: ['network'] as const,
+  authMode: ['auth', 'mode'] as const,
   owned: (serverId: string, libraryKey: string) => ['owned', serverId, libraryKey] as const,
   recommended: (serverId: string, libraryKey: string) =>
     ['recommended', serverId, libraryKey] as const,
@@ -431,5 +437,51 @@ export function useMislabeled(
     queryKey: queryKeys.mislabeled(serverId ?? '', libraryKey ?? '', threshold),
     queryFn: () => get<MislabeledResponse>(`/mislabeled/${serverId}/${libraryKey}/${threshold}`),
     enabled: enabled && Boolean(serverId) && Boolean(libraryKey),
+  });
+}
+
+/** GET /api/network — the connect/read HTTP timeouts (ms). */
+export function useNetworkSettings() {
+  return useQuery({
+    queryKey: queryKeys.network,
+    queryFn: () => get<NetworkSettings>('/network'),
+  });
+}
+
+/**
+ * PUT /api/network — persist the connect/read timeouts. The server validates
+ * and returns the effective settings, which we seed into the cache.
+ */
+export function useUpdateNetworkSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateNetworkRequest) => put<NetworkSettings>('/network', body),
+    onSuccess: (data) => {
+      qc.setQueryData(queryKeys.network, data);
+      void qc.invalidateQueries({ queryKey: queryKeys.network });
+    },
+  });
+}
+
+/** GET /api/auth/mode — whether HTTP Basic auth is enabled. Public (no creds). */
+export function useAuthMode() {
+  return useQuery({
+    queryKey: queryKeys.authMode,
+    queryFn: () => get<AuthModeResponse>('/auth/mode'),
+  });
+}
+
+/**
+ * POST /api/nuke — destructive reset. Wipes ALL data, resets settings, and
+ * reseeds providers. On success every cached query is cleared so the whole UI
+ * re-fetches and reflects the wiped state.
+ */
+export function useNuke() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => post<PayloadResult>('/nuke'),
+    onSuccess: () => {
+      qc.clear();
+    },
   });
 }

@@ -1,9 +1,10 @@
-import { useVersion } from '../api/hooks';
+import { useAuthMode, useVersion } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/ui';
 
 export function AboutPage() {
   const version = useVersion();
+  const authMode = useAuthMode();
 
   return (
     <div>
@@ -30,6 +31,16 @@ export function AboutPage() {
           App version:{' '}
           <span className="font-mono text-slate-200">
             {version.isLoading ? 'loading…' : (version.data?.version ?? 'unknown')}
+          </span>
+        </p>
+        <p className="text-slate-400">
+          Authentication:{' '}
+          <span className="text-slate-200">
+            {authMode.isLoading
+              ? 'loading…'
+              : authMode.data?.mode === 'basic'
+                ? 'Basic auth enabled'
+                : 'None (trusted LAN)'}
           </span>
         </p>
       </Card>
