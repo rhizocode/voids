@@ -230,4 +230,21 @@ describe('Recommended page', () => {
     expect(screen.getByText(/Latest gap:/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
   });
+
+  it('shows an error card when the recommendations fetch fails', async () => {
+    vi.mocked(client.get).mockImplementation((path: string) => {
+      if (path === '/servers') return Promise.resolve(fakeServers as never);
+      if (path.startsWith('/recommended/')) return Promise.reject(new Error('Network error'));
+      return Promise.resolve(undefined as never);
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not load recommendations.')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('No gaps found yet.')).not.toBeInTheDocument();
+  });
 });
