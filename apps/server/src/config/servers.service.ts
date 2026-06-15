@@ -83,6 +83,15 @@ export class ServersService {
       throw new ServerConnectionError(message);
     }
 
+    let discovered: MediaLibrary[];
+    try {
+      discovered = await source.listLibraries(conn);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Library listing failed for ${req.type} ${req.address}:${req.port}`);
+      throw new ServerConnectionError(message);
+    }
+
     const server: MediaServer = {
       id: info.id,
       type: req.type,
@@ -94,7 +103,6 @@ export class ServersService {
     };
     this.repo.upsertServer(server);
 
-    const discovered = await source.listLibraries(conn);
     for (const lib of discovered) {
       const existing = this.repo.findLibrary(server.id, lib.key);
       this.repo.upsertLibrary({

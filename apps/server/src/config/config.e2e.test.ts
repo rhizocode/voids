@@ -188,6 +188,20 @@ describe('Config endpoints (e2e)', () => {
     expect(res.body.reason).toContain('connection refused');
   });
 
+  it('POST /api/servers returns 400 and leaves no orphaned row when listLibraries fails', async () => {
+    (fakeSource.listLibraries as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('library scope denied'),
+    );
+    const res = await request(app.getHttpServer())
+      .post('/api/servers')
+      .send({ type: 'jellyfin', address: 'jellyfin.local', port: 8096, useHttps: false, token: 't' })
+      .expect(400);
+    expect(res.body.code).toBe(11);
+    expect(res.body.reason).toContain('library scope denied');
+    const list = await request(app.getHttpServer()).get('/api/servers').expect(200);
+    expect(list.body).toHaveLength(0);
+  });
+
   it('PUT /api/servers/:id/test returns success for a stored server', async () => {
     await request(app.getHttpServer())
       .post('/api/servers')
