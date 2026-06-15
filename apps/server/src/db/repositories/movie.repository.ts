@@ -249,6 +249,24 @@ export class MovieRepository {
     return this.findRecommended(id);
   }
 
+  /**
+   * Delete recommended_movies rows for (serverId, libraryKey) whose tmdbId is
+   * in `ownedTmdbIds`. Called after a successful run to clear stale gaps.
+   */
+  pruneRecommendedOwned(serverId: string, libraryKey: string, ownedTmdbIds: number[]): void {
+    if (ownedTmdbIds.length === 0) return;
+    this.db
+      .delete(recommendedMovies)
+      .where(
+        and(
+          eq(recommendedMovies.serverId, serverId),
+          eq(recommendedMovies.libraryKey, libraryKey),
+          inArray(recommendedMovies.tmdbId, ownedTmdbIds),
+        ),
+      )
+      .run();
+  }
+
   /** Bulk status update; returns the number of rows actually changed. */
   updateRecommendedStatusBulk(ids: number[], status: RecommendedMovieStatus): number {
     if (ids.length === 0) return 0;

@@ -102,6 +102,10 @@ export class SearchService {
         this.emitProgress(jobId, processed, owned.length);
       }
 
+      // Remove recommendations that the user has since acquired.
+      const ownedTmdbIds = owned.map((m) => m.tmdbId).filter((id): id is number => id != null);
+      this.movies.pruneRecommendedOwned(serverId, libraryKey, ownedTmdbIds);
+
       this.jobs.update(jobId, { status: 'succeeded', finishedAt: new Date() });
       this.realtime.emitFinished({
         jobId,

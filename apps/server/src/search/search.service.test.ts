@@ -221,6 +221,49 @@ describe('SearchService gap engine', () => {
     expect(recs.map((r) => r.tmdbId)).toContain(9799);
   });
 
+  it('clears a recommendation when the user acquires the movie before the next run', async () => {
+    // First run: 9799 is missing -> recommended.
+    const service = build(MovieStatus.RELEASED.id);
+    await service.runSearch(SERVER, LIB, jobs.create(SERVER, LIB));
+    expect(movies.listRecommended(SERVER, LIB).map((r) => r.tmdbId)).toContain(9799);
+
+    // User acquires 9799; library is updated to include both movies.
+    const ownedFast2: Movie = {
+      ...ownedFast,
+      title: 'The Fast and the Furious',
+      year: 2001,
+      tmdbId: 9799,
+      imdbId: 'tt0232500',
+      collectionId: 9485,
+      mediaItemId: 'jf-9799',
+      mediaItemKey: 'jf-9799',
+    };
+    movies.replaceOwned(SERVER, LIB, [ownedFast, ownedFast2]);
+
+    // Second run: recommendation for 9799 must be gone.
+    await service.runSearch(SERVER, LIB, jobs.create(SERVER, LIB));
+    expect(movies.listRecommended(SERVER, LIB).map((r) => r.tmdbId)).not.toContain(9799);
+  });
+
+  it('pruning is scoped to the current library and does not touch other libraries', async () => {
+    const OTHER_LIB = 'lib-2';
+    // Seed a recommendation for another library manually.
+    movies.replaceOwned(OTHER_LIB, 'ignored', []);
+    movies.upsertRecommended(SERVER, OTHER_LIB, {
+      ...ownedFast,
+      tmdbId: 584,
+      title: 'Sentinel',
+    });
+
+    // Run only for LIB; 584 is owned in LIB but not in OTHER_LIB.
+    const service = build(MovieStatus.RELEASED.id);
+    await service.runSearch(SERVER, LIB, jobs.create(SERVER, LIB));
+
+    // OTHER_LIB's recommendation must be untouched.
+    const otherRecs = movies.listRecommended(SERVER, OTHER_LIB);
+    expect(otherRecs.map((r) => r.tmdbId)).toContain(584);
+  });
+
   it('warm cache: a second run makes far fewer network calls', async () => {
     const service = build(MovieStatus.RELEASED.id);
     await service.runSearch(SERVER, LIB, jobs.create(SERVER, LIB));
