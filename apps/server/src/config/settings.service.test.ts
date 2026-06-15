@@ -65,6 +65,14 @@ describe('SettingsService', () => {
     ).toThrow();
   });
 
+  it('rejects a custom schedule with an invalid cron string', () => {
+    expect(() =>
+      service.update({
+        schedule: { enabled: true, mode: 'custom', presetId: null, cron: 'not a cron' },
+      }),
+    ).toThrow();
+  });
+
   it('stores the tmdb api key without exposing a password hash', () => {
     service.setTmdbApiKey('abc123');
     const s = service.get();

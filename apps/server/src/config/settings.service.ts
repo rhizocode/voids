@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import {
   Schedule,
@@ -12,6 +12,7 @@ import {
 import { DB } from '../db/db.module';
 import type { DbHandle } from '../db/client';
 import { settings as settingsTable } from '../db/schema';
+import { quartzToCron } from '../schedule/cron.util';
 
 const SETTINGS_ID = 1;
 
@@ -86,7 +87,17 @@ export class SettingsService {
 
     const set: Partial<typeof settingsTable.$inferInsert> = { updatedAt: new Date() };
     if (partial.tmdbApiKey !== undefined) set.tmdbApiKey = partial.tmdbApiKey;
-    if (partial.schedule !== undefined) set.schedule = resolveScheduleConfig(partial.schedule);
+    if (partial.schedule !== undefined) {
+      const resolved = resolveScheduleConfig(partial.schedule);
+      if (resolved.mode === 'custom') {
+        try {
+          quartzToCron(resolved.cron);
+        } catch (err) {
+          throw new BadRequestException(err instanceof Error ? err.message : 'Invalid cron expression');
+        }
+      }
+      set.schedule = resolved;
+    }
     if (partial.movieStatus !== undefined) set.movieStatus = partial.movieStatus;
     if (partial.connectTimeoutMs !== undefined) set.connectTimeoutMs = partial.connectTimeoutMs;
     if (partial.readTimeoutMs !== undefined) set.readTimeoutMs = partial.readTimeoutMs;
