@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Payload, payloadByCode } from './payload';
+import { Payload, payloadByCode, payloadCodes } from './payload';
 import { MovieStatus } from './movie-status';
 import { Schedule } from './schedule';
 
@@ -15,6 +15,10 @@ describe('Payload', () => {
 
   it('resolves a payload by code', () => {
     expect(payloadByCode(50)).toEqual(Payload.RECOMMENDED_MOVIES_FOUND);
+  });
+
+  it('has no duplicate codes', () => {
+    expect(payloadCodes.length).toBe(new Set(payloadCodes).size);
   });
 });
 

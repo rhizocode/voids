@@ -22,7 +22,7 @@ export const Payload = {
   PLEX_CONNECTION_FAILED: { code: 11, reason: 'Connection to media server failed.' },
   PARSING_PLEX_FAILED: { code: 12, reason: 'Failed to parse media server response.' },
   PLEX_URL_ERROR: { code: 13, reason: 'Error with media server URL.' },
-  PLEX_LIBRARIES_FOUND: { code: 13, reason: 'Media server libraries found.' },
+  PLEX_LIBRARIES_FOUND: { code: 15, reason: 'Media server libraries found.' },
   DUPLICATE_PLEX_LIBRARY: { code: 14, reason: 'Attempted to add duplicate library.' },
   TMDB_KEY_VALID: { code: 20, reason: 'TMDB Key valid.' },
   TMDB_KEY_INVALID: { code: 21, reason: 'TMDB Key invalid' },
