@@ -24,6 +24,8 @@ import { RealtimeService } from '../realtime/realtime.service';
 import { TmdbClient } from '../tmdb/tmdb.client';
 import { TmdbCacheService } from '../tmdb/tmdb-cache.service';
 import { NotificationService } from '../notifications/notification.service';
+import { NotificationRepository } from '../db/repositories/notification.repository';
+import { NOTIFICATION_PROVIDERS } from '../notifications/notification.tokens';
 import { SchedulerService } from './scheduler.service';
 import { SearchAllTask } from './search-all.task';
 import { ScheduleController } from './schedule.controller';
@@ -107,6 +109,8 @@ describe('Schedule + movie-status (e2e)', () => {
         MovieRepository,
         SearchJobRepository,
         NotificationService,
+        NotificationRepository,
+        { provide: NOTIFICATION_PROVIDERS, useValue: [] },
         { provide: DB, useValue: handle },
         { provide: MediaSourceRegistry, useValue: fakeRegistry },
         { provide: TmdbClient, useClass: FakeTmdbClient },

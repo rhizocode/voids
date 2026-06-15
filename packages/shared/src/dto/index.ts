@@ -8,3 +8,4 @@ export * from './rss.dto';
 export * from './realtime.dto';
 export * from './schedule.dto';
 export * from './movie-status.dto';
+export * from './notification.dto';
