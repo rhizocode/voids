@@ -10,6 +10,9 @@ import { movieStatusIdSchema } from '../enums/movie-status';
 export const authModeSchema = z.enum(['none', 'basic']);
 export type AuthMode = z.infer<typeof authModeSchema>;
 
+export const minimumAvailabilitySchema = z.enum(['announced', 'inCinemas', 'released', 'tba']);
+export type MinimumAvailability = z.infer<typeof minimumAvailabilitySchema>;
+
 /**
  * Radarr (v3) connection + add-movie defaults. Stored as a single JSON column
  * on the settings row. `apiKey` is part of the single-user config and is
@@ -22,8 +25,7 @@ export const radarrConfigSchema = z.object({
   qualityProfileId: z.number().int().nullable().default(null),
   rootFolderPath: z.string().nullable().default(null),
   monitored: z.boolean().default(true),
-  /** Radarr v3 minimum availability: announced | inCinemas | released | tba. */
-  minimumAvailability: z.string().default('released'),
+  minimumAvailability: minimumAvailabilitySchema.default('released'),
   /** Whether to trigger an automatic search when a movie is added. */
   searchOnAdd: z.boolean().default(true),
 });

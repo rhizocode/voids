@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Payload,
   radarrConfigSchema,
+  type MinimumAvailability,
   type RadarrConfig,
   type RadarrQualityProfile,
   type RadarrRootFolder,
@@ -27,11 +28,12 @@ import {
 } from '../../components/ui';
 import { ApiError } from '../../api/client';
 
-const AVAILABILITY_OPTIONS = [
+const AVAILABILITY_OPTIONS: { value: MinimumAvailability; label: string }[] = [
   { value: 'announced', label: 'Announced' },
   { value: 'inCinemas', label: 'In Cinemas' },
   { value: 'released', label: 'Released' },
-] as const;
+  { value: 'tba', label: 'TBA' },
+];
 
 /** Default draft for an unconfigured Radarr (matches the shared schema defaults). */
 const EMPTY_DRAFT: RadarrConfig = {
@@ -222,7 +224,7 @@ export function RadarrTab() {
               id="radarr-availability"
               className="mt-1"
               value={draft.minimumAvailability}
-              onChange={(e) => set('minimumAvailability', e.target.value)}
+              onChange={(e) => set('minimumAvailability', e.target.value as MinimumAvailability)}
             >
               {AVAILABILITY_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
