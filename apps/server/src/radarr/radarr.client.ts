@@ -29,7 +29,7 @@ export interface RadarrAddMovieArgs {
 export type RadarrAddOutcome =
   | { status: 'added' }
   | { status: 'exists' }
-  | { status: 'failed'; error: string };
+  | { status: 'failed'; error: string; transport?: true };
 
 const DEFAULT_TIMEOUT_MS = 10000;
 
@@ -210,7 +210,7 @@ export class RadarrClient {
         body: JSON.stringify(body),
       });
     } catch (err) {
-      return { status: 'failed', error: RadarrClient.safeMessage(err) };
+      return { status: 'failed', error: RadarrClient.safeMessage(err), transport: true };
     }
 
     if (res.ok) return { status: 'added' };

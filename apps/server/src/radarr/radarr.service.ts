@@ -90,9 +90,17 @@ export class RadarrService {
     const approved = this.movies.listRecommendedByStatus(serverId, libraryKey, 'approved');
     const results: RadarrPushResult[] = [];
 
+    let transportDown = false;
     for (const movie of approved) {
+      if (transportDown) {
+        results.push({ tmdbId: movie.tmdbId, title: movie.title, status: 'failed', error: 'Skipped: Radarr unreachable.' });
+        continue;
+      }
       const result = await this.pushOne(conn, cfg, movie.title, movie.tmdbId);
       results.push(result);
+      if (result.status === 'failed' && 'transport' in result && result.transport) {
+        transportDown = true;
+      }
     }
 
     const added = results.filter((r) => r.status === 'added').length;
@@ -111,7 +119,7 @@ export class RadarrService {
     cfg: RadarrConfig,
     title: string,
     tmdbId: number | null,
-  ): Promise<RadarrPushResult> {
+  ): Promise<RadarrPushResult & { transport?: true }> {
     if (tmdbId == null) {
       return { tmdbId: null, title, status: 'failed', error: 'Missing tmdbId.' };
     }
@@ -135,7 +143,7 @@ export class RadarrService {
     });
 
     if (outcome.status === 'failed') {
-      return { tmdbId, title, status: 'failed', error: outcome.error };
+      return { tmdbId, title, status: 'failed', error: outcome.error, ...(outcome.transport ? { transport: true as const } : {}) };
     }
     return { tmdbId, title, status: outcome.status };
   }

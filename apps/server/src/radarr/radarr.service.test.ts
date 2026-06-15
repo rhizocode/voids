@@ -128,6 +128,46 @@ describe('RadarrService.pushApproved', () => {
     expect(addMovie).not.toHaveBeenCalled();
   });
 
+  it('short-circuits remaining movies after a transport failure', async () => {
+    const { service, addMovie } = makeService({
+      radarr: FULL_CONFIG,
+      approved: [
+        rec({ id: 1, title: 'First', tmdbId: 1 }),
+        rec({ id: 2, title: 'Second', tmdbId: 2 }),
+        rec({ id: 3, title: 'Third', tmdbId: 3 }),
+      ],
+      addOutcomes: [
+        { status: 'failed', error: 'The operation was aborted', transport: true },
+      ],
+    });
+    const res = await service.pushApproved('s', 'l');
+    expect(res.configured).toBe(true);
+    // Only one real addMovie call — the rest were skipped
+    expect(addMovie).toHaveBeenCalledTimes(1);
+    expect(res.results).toHaveLength(3);
+    expect(res.results[0]).toMatchObject({ tmdbId: 1, title: 'First', status: 'failed' });
+    expect(res.results[1]).toMatchObject({ tmdbId: 2, title: 'Second', status: 'failed' });
+    expect(res.results[2]).toMatchObject({ tmdbId: 3, title: 'Third', status: 'failed' });
+  });
+
+  it('does not short-circuit after a business (HTTP) failure', async () => {
+    const { service, addMovie } = makeService({
+      radarr: FULL_CONFIG,
+      approved: [
+        rec({ id: 1, title: 'First', tmdbId: 1 }),
+        rec({ id: 2, title: 'Second', tmdbId: 2 }),
+      ],
+      addOutcomes: [
+        { status: 'failed', error: 'HTTP 422: invalid quality' },
+        { status: 'added' },
+      ],
+    });
+    const res = await service.pushApproved('s', 'l');
+    expect(addMovie).toHaveBeenCalledTimes(2);
+    expect(res.results[0]).toMatchObject({ status: 'failed' });
+    expect(res.results[1]).toMatchObject({ status: 'added' });
+  });
+
   it('getMovies returns [] when unconfigured', async () => {
     const { service, listMovies } = makeService({ radarr: null });
     expect(await service.getMovies()).toEqual([]);
