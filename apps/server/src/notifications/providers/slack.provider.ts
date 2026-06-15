@@ -6,7 +6,7 @@ import {
   type SlackConfig,
 } from '@voids/shared';
 import type { NotificationProvider } from './notification-provider.interface';
-import { postJson } from './notification-provider.interface';
+import { postJson, escapeSlack } from './notification-provider.interface';
 import type { NotificationLevel } from '../notification.service';
 
 /**
@@ -38,7 +38,7 @@ export class SlackProvider implements NotificationProvider<SlackConfig> {
             type: 'section',
             text: {
               type: 'mrkdwn',
-              text: `*${title}*\n${body}`,
+              text: `*${escapeSlack(title)}*\n${escapeSlack(body)}`,
             },
           },
         ],

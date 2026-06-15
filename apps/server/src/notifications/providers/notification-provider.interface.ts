@@ -36,6 +36,16 @@ export interface NotificationProvider<C extends NotificationConfig = Notificatio
 /** Shared 5s timeout for all providers (matches the original Gaps client). */
 export const NOTIFICATION_TIMEOUT_MS = 5000;
 
+/** Escape user-controlled content for Telegram HTML parse_mode (& must go first). */
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Escape user-controlled content for Slack mrkdwn (& must go first). */
+export function escapeSlack(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /**
  * POST JSON to a URL with the shared timeout, throwing a redacted error on a
  * non-2xx response or transport failure. `label` is a safe identifier used in

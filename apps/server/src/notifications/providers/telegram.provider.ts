@@ -6,7 +6,7 @@ import {
   type TelegramConfig,
 } from '@voids/shared';
 import type { NotificationProvider } from './notification-provider.interface';
-import { postJson } from './notification-provider.interface';
+import { postJson, escapeHtml } from './notification-provider.interface';
 import type { NotificationLevel } from '../notification.service';
 
 /**
@@ -35,7 +35,7 @@ export class TelegramProvider implements NotificationProvider<TelegramConfig> {
       url,
       {
         chat_id: config.chatId,
-        text: `<strong>${title}</strong>\n${body}`,
+        text: `<strong>${escapeHtml(title)}</strong>\n${escapeHtml(body)}`,
         parse_mode: 'HTML',
       },
       this.name,

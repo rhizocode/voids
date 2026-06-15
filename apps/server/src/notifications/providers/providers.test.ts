@@ -6,6 +6,7 @@ import { SlackProvider } from './slack.provider';
 import { GotifyProvider } from './gotify.provider';
 import { PushOverProvider } from './pushover.provider';
 import { DiscordProvider } from './discord.provider';
+import { escapeHtml, escapeSlack } from './notification-provider.interface';
 
 /** Capture the single fetch call and assert URL/method/headers/body. */
 function mockFetchOk() {
@@ -149,6 +150,49 @@ describe('notification providers — HTTP request shapes (gaps-reference §6)', 
     expect(c.url).toBe('https://discord.com/api/webhooks/X');
     expect(c.method).toBe('POST');
     expect(c.body).toEqual({ embeds: [{ title: 'Title', description: 'Body' }] });
+  });
+
+  it('escapeHtml escapes & < > in the right order', () => {
+    expect(escapeHtml('Fast & Furious')).toBe('Fast &amp; Furious');
+    expect(escapeHtml('Movies <4K>')).toBe('Movies &lt;4K&gt;');
+    expect(escapeHtml('A & <B>')).toBe('A &amp; &lt;B&gt;');
+  });
+
+  it('escapeSlack escapes & < >', () => {
+    expect(escapeSlack('Fast & Furious')).toBe('Fast &amp; Furious');
+    expect(escapeSlack('Movies <4K>')).toBe('Movies &lt;4K&gt;');
+  });
+
+  it('Telegram → escapes & < > in title and body', async () => {
+    const fetchFn = mockFetchOk();
+    const p = new TelegramProvider();
+    await p.send(
+      { id: NotificationProviderId.TELEGRAM, botId: 'BOT', chatId: 'CHAT' },
+      'TEST',
+      'info',
+      'Fast & Furious',
+      'Movies <4K> & more',
+    );
+    const c = lastCall(fetchFn);
+    expect(c.body.text).toBe(
+      '<strong>Fast &amp; Furious</strong>\nMovies &lt;4K&gt; &amp; more',
+    );
+  });
+
+  it('Slack → escapes & < > in title and body', async () => {
+    const fetchFn = mockFetchOk();
+    const p = new SlackProvider();
+    await p.send(
+      { id: NotificationProviderId.SLACK, webHookUrl: 'https://hooks.slack.com/services/X' },
+      'TEST',
+      'info',
+      'Fast & Furious',
+      'Movies <4K> & more',
+    );
+    const c = lastCall(fetchFn);
+    expect(c.body.blocks[0].text.text).toBe(
+      '*Fast &amp; Furious*\nMovies &lt;4K&gt; &amp; more',
+    );
   });
 
   it('throws on a non-2xx response', async () => {
