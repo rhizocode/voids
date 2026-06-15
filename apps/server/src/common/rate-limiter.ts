@@ -169,11 +169,13 @@ export async function fetchJson<T>(
       );
       if (res.status === 429 && attempt < maxRetries) {
         const delay = parseRetryAfter(res.headers.get('retry-after'), baseDelayMs);
+        await res.body?.cancel().catch(() => {});
         attempt += 1;
         await sleep(delay);
         continue;
       }
       if (res.status >= 500 && res.status < 600 && attempt < maxRetries) {
+        await res.body?.cancel().catch(() => {});
         attempt += 1;
         await sleep(baseDelayMs * attempt);
         continue;
