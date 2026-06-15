@@ -11,5 +11,9 @@ export type SettingsResponse = z.infer<typeof settingsResponseSchema>;
  */
 export const updateSettingsRequestSchema = settingsSchema
   .omit({ tmdbApiKey: true })
-  .partial();
+  .partial()
+  .refine((s) => !(s.autoPushRadarr === true && s.radarr === null), {
+    message: 'autoPushRadarr requires a valid Radarr configuration',
+    path: ['autoPushRadarr'],
+  });
 export type UpdateSettingsRequest = z.infer<typeof updateSettingsRequestSchema>;

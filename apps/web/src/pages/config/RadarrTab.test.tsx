@@ -112,4 +112,27 @@ describe('Radarr tab', () => {
     expect(screen.getByLabelText('Quality profile').tagName).toBe('INPUT');
     expect(screen.getByLabelText('Root folder').tagName).toBe('INPUT');
   });
+
+  it('Save shows error toast when url or apiKey is blank', async () => {
+    const { fakeSettings } = await import('../../test/fixtures');
+    vi.mocked(client.get).mockImplementation((path: string) => {
+      if (path === '/settings') return Promise.resolve({ ...fakeSettings, radarr: null }) as never;
+      if (path === '/radarr/quality-profiles') return Promise.resolve([]) as never;
+      if (path === '/radarr/root-folders') return Promise.resolve([]) as never;
+      return Promise.reject(new Error(`unexpected GET ${path}`)) as never;
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<RadarrTab />);
+
+    // Wait for settings to load (url field will be empty string from EMPTY_DRAFT).
+    await waitFor(() => {
+      expect(screen.getByLabelText('URL')).toHaveValue('');
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('Fix the Radarr config before saving.')).toBeInTheDocument();
+    expect(client.put).not.toHaveBeenCalled();
+  });
 });

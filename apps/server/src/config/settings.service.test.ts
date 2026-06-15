@@ -79,4 +79,27 @@ describe('SettingsService', () => {
     expect(s.tmdbApiKey).toBe('abc123');
     expect(s).not.toHaveProperty('authPasswordHash');
   });
+
+  it('persists a radarr config with non-empty url and apiKey', () => {
+    service.update({
+      radarr: {
+        url: 'http://radarr.example.com:7878',
+        apiKey: 'abc123',
+        qualityProfileId: null,
+        rootFolderPath: null,
+        monitored: true,
+        minimumAvailability: 'released',
+        searchOnAdd: true,
+      },
+    });
+    const s = service.get();
+    expect(s.radarr?.url).toBe('http://radarr.example.com:7878');
+  });
+
+  it('allows autoPushRadarr=false with radarr=null (Radarr not configured)', () => {
+    service.update({ autoPushRadarr: false, radarr: null });
+    const s = service.get();
+    expect(s.autoPushRadarr).toBe(false);
+    expect(s.radarr).toBeNull();
+  });
 });

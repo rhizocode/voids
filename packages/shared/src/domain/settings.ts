@@ -20,8 +20,8 @@ export type MinimumAvailability = z.infer<typeof minimumAvailabilitySchema>;
  * but is never written to logs.
  */
 export const radarrConfigSchema = z.object({
-  url: z.string(),
-  apiKey: z.string(),
+  url: z.string().min(1),
+  apiKey: z.string().min(1),
   qualityProfileId: z.number().int().nullable().default(null),
   rootFolderPath: z.string().nullable().default(null),
   monitored: z.boolean().default(true),

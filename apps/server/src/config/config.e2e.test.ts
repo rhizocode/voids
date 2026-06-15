@@ -105,6 +105,22 @@ describe('Config endpoints (e2e)', () => {
       .expect(400);
   });
 
+  it('PUT /api/settings rejects autoPushRadarr=true with radarr=null', async () => {
+    await request(app.getHttpServer())
+      .put('/api/settings')
+      .send({ autoPushRadarr: true, radarr: null })
+      .expect(400);
+  });
+
+  it('PUT /api/settings accepts autoPushRadarr=false with radarr=null', async () => {
+    const res = await request(app.getHttpServer())
+      .put('/api/settings')
+      .send({ autoPushRadarr: false, radarr: null })
+      .expect(200);
+    expect(res.body.autoPushRadarr).toBe(false);
+    expect(res.body.radarr).toBeNull();
+  });
+
   it('PUT /api/tmdb/test returns TMDB_KEY_VALID(20) on a valid key', async () => {
     fakeTmdb.validateKey.mockResolvedValue(true);
     const res = await request(app.getHttpServer())
