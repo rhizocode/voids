@@ -29,6 +29,7 @@ export const fakeSettings: SettingsResponse = {
   readTimeoutMs: 30000,
   authMode: 'none',
   autoPushRadarr: false,
+  radarr: null,
 };
 
 export const fakeSchedule: ScheduleConfig = {

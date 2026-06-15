@@ -23,6 +23,7 @@ export const settings = sqliteTable('settings', {
   connectTimeoutMs: integer('connect_timeout_ms').notNull().default(10000),
   readTimeoutMs: integer('read_timeout_ms').notNull().default(60000),
   autoPushRadarr: integer('auto_push_radarr', { mode: 'boolean' }).notNull().default(false),
+  radarr: text('radarr', { mode: 'json' }),
   createdAt: integer('created_at', { mode: 'timestamp' })
     .notNull()
     .default(sql`(unixepoch())`),

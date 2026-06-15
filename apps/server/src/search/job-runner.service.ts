@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import type { SearchJobStatus } from '@voids/shared';
 import { SearchJobRepository } from '../db/repositories/search-job.repository';
 import { SearchService } from './search.service';
 
@@ -36,6 +37,36 @@ export class JobRunnerService implements OnApplicationBootstrap {
     this.queue.push(jobId);
     void this.drain();
     return jobId;
+  }
+
+  /**
+   * Enqueue a search and resolve once the job reaches a terminal state
+   * (`succeeded` | `failed` | `cancelled`), returning the final status. Used by
+   * the scheduled run so it can act on results (e.g. auto-push to Radarr) only
+   * after the search actually finishes. Polls the DB-backed job row, which is
+   * the durable source of truth.
+   */
+  async enqueueAndWait(
+    serverId: string,
+    libraryKey: string,
+    opts: { pollMs?: number; timeoutMs?: number } = {},
+  ): Promise<{ jobId: number; status: SearchJobStatus }> {
+    const pollMs = opts.pollMs ?? 100;
+    const timeoutMs = opts.timeoutMs ?? 30 * 60 * 1000;
+    const jobId = this.enqueue(serverId, libraryKey);
+    const deadline = Date.now() + timeoutMs;
+    const terminal: SearchJobStatus[] = ['succeeded', 'failed', 'cancelled'];
+    for (;;) {
+      const job = this.jobs.find(jobId);
+      if (job && terminal.includes(job.status)) {
+        return { jobId, status: job.status };
+      }
+      if (Date.now() > deadline) {
+        this.logger.warn(`enqueueAndWait timed out waiting for job ${jobId}`);
+        return { jobId, status: job?.status ?? 'failed' };
+      }
+      await new Promise((r) => setTimeout(r, pollMs));
+    }
   }
 
   /** Request cancellation; works mid-run (the engine polls between movies). */

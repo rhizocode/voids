@@ -8,6 +8,13 @@
       "when": 1781507299900,
       "tag": "0000_wild_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781513635195,
+      "tag": "0001_overrated_moonstone",
+      "breakpoints": true
     }
   ]
 }

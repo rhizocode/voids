@@ -28,6 +28,8 @@ import { NotificationRepository } from '../db/repositories/notification.reposito
 import { NOTIFICATION_PROVIDERS } from '../notifications/notification.tokens';
 import { SchedulerService } from './scheduler.service';
 import { SearchAllTask } from './search-all.task';
+import { RadarrService } from '../radarr/radarr.service';
+import { RadarrClient } from '../radarr/radarr.client';
 import { ScheduleController } from './schedule.controller';
 import { MovieStatusController } from './movie-status.controller';
 
@@ -110,6 +112,8 @@ describe('Schedule + movie-status (e2e)', () => {
         SearchJobRepository,
         NotificationService,
         NotificationRepository,
+        RadarrService,
+        { provide: RadarrClient, useValue: { listMovies: vi.fn(), addMovie: vi.fn(), testConnection: vi.fn(), getQualityProfiles: vi.fn(), getRootFolders: vi.fn() } },
         { provide: NOTIFICATION_PROVIDERS, useValue: [] },
         { provide: DB, useValue: handle },
         { provide: MediaSourceRegistry, useValue: fakeRegistry },

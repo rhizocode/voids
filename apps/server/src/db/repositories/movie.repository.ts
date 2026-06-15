@@ -201,6 +201,27 @@ export class MovieRepository {
       .map(recRowToMovie);
   }
 
+  /** Recommendations for a library filtered to a single status. */
+  listRecommendedByStatus(
+    serverId: string,
+    libraryKey: string,
+    status: RecommendedMovieStatus,
+  ): RecommendedMovie[] {
+    return this.db
+      .select()
+      .from(recommendedMovies)
+      .where(
+        and(
+          eq(recommendedMovies.serverId, serverId),
+          eq(recommendedMovies.libraryKey, libraryKey),
+          eq(recommendedMovies.status, status),
+        ),
+      )
+      .orderBy(asc(recommendedMovies.collectionId), asc(recommendedMovies.discoveredAt))
+      .all()
+      .map(recRowToMovie);
+  }
+
   /** A single recommendation by its row id, or undefined if not found. */
   findRecommended(id: number): RecommendedMovie | undefined {
     const row = this.db

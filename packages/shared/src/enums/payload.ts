@@ -94,6 +94,9 @@ export const Payload = {
   MOVIE_STATUS_NOT_FOUND: { code: 151, reason: 'Movie status not found.' },
   MOVIE_STATUS_UPDATED: { code: 152, reason: 'Movie status updated successfully.' },
   MOVIE_STATUS_NOT_UPDATED: { code: 153, reason: 'Movie status update failed.' },
+  RADARR_CONNECTION_SUCCEEDED: { code: 160, reason: 'Connection to Radarr succeeded.' },
+  RADARR_CONNECTION_FAILED: { code: 161, reason: 'Connection to Radarr failed.' },
+  RADARR_NOT_CONFIGURED: { code: 162, reason: 'Radarr is not configured.' },
 } as const satisfies Record<string, PayloadEntry>;
 
 export type PayloadName = keyof typeof Payload;

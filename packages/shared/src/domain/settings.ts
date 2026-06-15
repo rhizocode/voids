@@ -11,6 +11,25 @@ export const authModeSchema = z.enum(['none', 'basic']);
 export type AuthMode = z.infer<typeof authModeSchema>;
 
 /**
+ * Radarr (v3) connection + add-movie defaults. Stored as a single JSON column
+ * on the settings row. `apiKey` is part of the single-user config and is
+ * returned by the API like the TMDB key / Plex token (matching prior phases),
+ * but is never written to logs.
+ */
+export const radarrConfigSchema = z.object({
+  url: z.string(),
+  apiKey: z.string(),
+  qualityProfileId: z.number().int().nullable().default(null),
+  rootFolderPath: z.string().nullable().default(null),
+  monitored: z.boolean().default(true),
+  /** Radarr v3 minimum availability: announced | inCinemas | released | tba. */
+  minimumAvailability: z.string().default('released'),
+  /** Whether to trigger an automatic search when a movie is added. */
+  searchOnAdd: z.boolean().default(true),
+});
+export type RadarrConfig = z.infer<typeof radarrConfigSchema>;
+
+/**
  * The API-facing application settings (was `PlexProperties`). The password
  * hash is intentionally omitted — it lives only in the DB row.
  */
@@ -22,5 +41,7 @@ export const settingsSchema = z.object({
   readTimeoutMs: z.number().int(),
   authMode: authModeSchema,
   autoPushRadarr: z.boolean(),
+  /** Radarr connection + defaults; null when Radarr is not configured. */
+  radarr: radarrConfigSchema.nullable(),
 });
 export type Settings = z.infer<typeof settingsSchema>;

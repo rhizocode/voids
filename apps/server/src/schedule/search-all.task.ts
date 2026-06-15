@@ -7,6 +7,7 @@ import { SettingsService } from '../config/settings.service';
 import { LibraryService } from '../library/library.service';
 import { JobRunnerService } from '../search/job-runner.service';
 import { NotificationService } from '../notifications/notification.service';
+import { RadarrService } from '../radarr/radarr.service';
 
 /**
  * The full scheduled run (brief §4; mirrors Gaps' `SearchGapsTask`). For every
@@ -28,6 +29,7 @@ export class SearchAllTask {
     private readonly library: LibraryService,
     private readonly runner: JobRunnerService,
     private readonly notifications: NotificationService,
+    private readonly radarr: RadarrService,
   ) {}
 
   /** Run the full automation pass across every configured media server. */
@@ -102,14 +104,14 @@ export class SearchAllTask {
       this.logger.log(`Server ${server.id} has no enabled libraries; nothing to search.`);
     }
 
-    for (const lib of enabled) {
-      await this.processLibrary(server, lib);
-    }
+    // Auto-push is only meaningful when the setting is on AND Radarr is set up.
+    // When enabled we wait for each library's search to finish, then push that
+    // library's approved recommendations to Radarr.
+    const autoPush = this.settings.get().autoPushRadarr && this.radarr.isConfigured();
 
-    // 6. TODO(Phase 6): if settings.autoPushRadarr, push approved recommendations
-    //    to Radarr here. Intentionally a no-op hook — Radarr is out of scope for
-    //    Phase 4 and must NOT be implemented yet.
-    //    if (this.settings.get().autoPushRadarr) { /* push approved -> Radarr */ }
+    for (const lib of enabled) {
+      await this.processLibrary(server, lib, autoPush);
+    }
   }
 
   /** Re-list libraries from the source and persist, keeping flags intact. */
@@ -145,7 +147,11 @@ export class SearchAllTask {
   }
 
   /** Scan + enqueue a search for one enabled library, isolating failures. */
-  private async processLibrary(server: MediaServer, lib: MediaLibrary): Promise<void> {
+  private async processLibrary(
+    server: MediaServer,
+    lib: MediaLibrary,
+    autoPush: boolean,
+  ): Promise<void> {
     try {
       const count = await this.library.scan(server.id, lib.key);
       await this.notify(
@@ -154,8 +160,17 @@ export class SearchAllTask {
         'Owned movies scanned',
         `Scanned ${count} owned movie(s) in "${lib.title}".`,
       );
-      const jobId = this.runner.enqueue(server.id, lib.key);
-      this.logger.log(`Enqueued search job ${jobId} for ${server.id}/${lib.key}.`);
+      if (autoPush) {
+        // Wait for the search to finish, then push approved recommendations.
+        const { jobId, status } = await this.runner.enqueueAndWait(server.id, lib.key);
+        this.logger.log(`Search job ${jobId} for ${server.id}/${lib.key} finished: ${status}.`);
+        if (status === 'succeeded') {
+          await this.autoPush(server, lib);
+        }
+      } else {
+        const jobId = this.runner.enqueue(server.id, lib.key);
+        this.logger.log(`Enqueued search job ${jobId} for ${server.id}/${lib.key}.`);
+      }
       // The GAPS_MISSING_COLLECTIONS notification fires from SearchService when
       // the enqueued job completes (decoupled — see search.service.ts).
     } catch (err) {
@@ -168,6 +183,34 @@ export class SearchAllTask {
         'error',
         'Library scan failed',
         `Could not scan "${lib.title}"; skipping its search.`,
+      );
+    }
+  }
+
+  /**
+   * Push a library's approved recommendations to Radarr after its scheduled
+   * search completes. All errors are swallowed (logged + notified) so a Radarr
+   * outage can never abort the run (brief §6.3).
+   */
+  private async autoPush(server: MediaServer, lib: MediaLibrary): Promise<void> {
+    try {
+      const res = await this.radarr.pushApproved(server.id, lib.key);
+      if (!res.configured) return;
+      const added = res.results.filter((r) => r.status === 'added').length;
+      const exists = res.results.filter((r) => r.status === 'exists').length;
+      const failed = res.results.filter((r) => r.status === 'failed').length;
+      this.logger.log(
+        `Auto-push to Radarr for "${lib.title}": ${added} added, ${exists} already present, ${failed} failed.`,
+      );
+      await this.notify(
+        NotificationType.GAPS_MISSING_COLLECTIONS,
+        failed > 0 ? 'warn' : 'info',
+        'Pushed approved movies to Radarr',
+        `"${lib.title}": ${added} added, ${exists} already in Radarr, ${failed} failed.`,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `Auto-push to Radarr failed for "${lib.title}": ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

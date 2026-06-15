@@ -4,6 +4,7 @@ import {
   Schedule,
   type AuthMode,
   type MovieStatusId,
+  type RadarrConfig,
   type ScheduleConfig,
   type Settings,
 } from '@voids/shared';
@@ -48,6 +49,7 @@ export class SettingsService {
       readTimeoutMs: row.readTimeoutMs,
       authMode: (row.authMode as AuthMode) ?? 'none',
       autoPushRadarr: row.autoPushRadarr,
+      radarr: (row.radarr as RadarrConfig | null) ?? null,
     };
   }
 
@@ -74,7 +76,10 @@ export class SettingsService {
 
   /** Apply a partial update to the settings row and return the result. */
   update(
-    partial: Partial<Omit<Settings, 'tmdbApiKey'>> & { tmdbApiKey?: string | null },
+    partial: Partial<Omit<Settings, 'tmdbApiKey' | 'radarr'>> & {
+      tmdbApiKey?: string | null;
+      radarr?: RadarrConfig | null;
+    },
   ): Settings {
     this.get(); // ensure the row exists
 
@@ -86,6 +91,7 @@ export class SettingsService {
     if (partial.readTimeoutMs !== undefined) set.readTimeoutMs = partial.readTimeoutMs;
     if (partial.authMode !== undefined) set.authMode = partial.authMode;
     if (partial.autoPushRadarr !== undefined) set.autoPushRadarr = partial.autoPushRadarr;
+    if (partial.radarr !== undefined) set.radarr = partial.radarr;
 
     this.db.update(settingsTable).set(set).where(eq(settingsTable.id, SETTINGS_ID)).run();
     return this.get();

@@ -29,6 +29,10 @@ function makeTask(overrides: {
   testConnection?: ReturnType<typeof vi.fn>;
   listLibraries?: ReturnType<typeof vi.fn>;
   scan?: ReturnType<typeof vi.fn>;
+  autoPushRadarr?: boolean;
+  radarrConfigured?: boolean;
+  enqueueAndWaitStatus?: 'succeeded' | 'failed' | 'cancelled';
+  pushApproved?: ReturnType<typeof vi.fn>;
 }) {
   const servers = overrides.servers ?? [SRV_A];
   const libsByServer = overrides.libsByServer ?? { 'srv-a': [libEnabled('srv-a', 'lib-1')] };
@@ -47,12 +51,30 @@ function makeTask(overrides: {
   };
   const registry = { get: vi.fn(() => source) };
   const settings = {
-    get: () => ({ connectTimeoutMs: 1000, readTimeoutMs: 1000, autoPushRadarr: false }),
+    get: () => ({
+      connectTimeoutMs: 1000,
+      readTimeoutMs: 1000,
+      autoPushRadarr: overrides.autoPushRadarr ?? false,
+    }),
   };
   const library = { scan: overrides.scan ?? vi.fn().mockResolvedValue(3) };
-  const runner = { enqueue: vi.fn((_s: string, _l: string) => 42) };
+  const enqueueAndWaitStatus = overrides.enqueueAndWaitStatus ?? 'succeeded';
+  const runner = {
+    enqueue: vi.fn((_s: string, _l: string) => 42),
+    enqueueAndWait: vi.fn(async (_s: string, _l: string) => ({
+      jobId: 42,
+      status: enqueueAndWaitStatus,
+    })),
+  };
   const notify = vi.fn().mockResolvedValue(undefined);
   const notifications = { notify };
+  const pushApproved =
+    overrides.pushApproved ??
+    vi.fn().mockResolvedValue({ configured: true, results: [] });
+  const radarr = {
+    isConfigured: vi.fn(() => overrides.radarrConfigured ?? false),
+    pushApproved,
+  };
 
   const task = new SearchAllTask(
     repo as never,
@@ -61,8 +83,9 @@ function makeTask(overrides: {
     library as never,
     runner as never,
     notifications as never,
+    radarr as never,
   );
-  return { task, repo, source, library, runner, notify };
+  return { task, repo, source, library, runner, notify, radarr, pushApproved };
 }
 
 describe('SearchAllTask', () => {
@@ -150,5 +173,50 @@ describe('SearchAllTask', () => {
 
     expect(ctx.runner.enqueue).toHaveBeenCalledTimes(1);
     expect(ctx.runner.enqueue).toHaveBeenCalledWith('srv-a', 'lib-on');
+  });
+
+  it('auto-push OFF: does not call pushApproved (fire-and-forget enqueue)', async () => {
+    const ctx = makeTask({ autoPushRadarr: false, radarrConfigured: true });
+    await ctx.task.run();
+    expect(ctx.runner.enqueue).toHaveBeenCalledTimes(1);
+    expect(ctx.runner.enqueueAndWait).not.toHaveBeenCalled();
+    expect(ctx.pushApproved).not.toHaveBeenCalled();
+  });
+
+  it('auto-push ON but Radarr unconfigured: does not wait or push', async () => {
+    const ctx = makeTask({ autoPushRadarr: true, radarrConfigured: false });
+    await ctx.task.run();
+    expect(ctx.runner.enqueue).toHaveBeenCalledTimes(1);
+    expect(ctx.runner.enqueueAndWait).not.toHaveBeenCalled();
+    expect(ctx.pushApproved).not.toHaveBeenCalled();
+  });
+
+  it('auto-push ON + configured: waits for the job, then pushes approved', async () => {
+    const ctx = makeTask({ autoPushRadarr: true, radarrConfigured: true });
+    await ctx.task.run();
+    expect(ctx.runner.enqueue).not.toHaveBeenCalled();
+    expect(ctx.runner.enqueueAndWait).toHaveBeenCalledWith('srv-a', 'lib-1');
+    expect(ctx.pushApproved).toHaveBeenCalledWith('srv-a', 'lib-1');
+  });
+
+  it('auto-push ON: a failed search skips the push', async () => {
+    const ctx = makeTask({
+      autoPushRadarr: true,
+      radarrConfigured: true,
+      enqueueAndWaitStatus: 'failed',
+    });
+    await ctx.task.run();
+    expect(ctx.runner.enqueueAndWait).toHaveBeenCalledTimes(1);
+    expect(ctx.pushApproved).not.toHaveBeenCalled();
+  });
+
+  it('auto-push ON: a pushApproved error never aborts the run', async () => {
+    const ctx = makeTask({
+      autoPushRadarr: true,
+      radarrConfigured: true,
+      pushApproved: vi.fn().mockRejectedValue(new Error('radarr down')),
+    });
+    await expect(ctx.task.run()).resolves.toBeUndefined();
+    expect(ctx.pushApproved).toHaveBeenCalledTimes(1);
   });
 });

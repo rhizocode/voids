@@ -4,6 +4,7 @@ import { MediaModule } from '../media/media.module';
 import { SettingsModule } from '../config/settings.module';
 import { LibraryModule } from '../library/library.module';
 import { SearchModule } from '../search/search.module';
+import { RadarrModule } from '../radarr/radarr.module';
 import { ServerRepository } from '../db/repositories/server.repository';
 import { SchedulerService } from './scheduler.service';
 import { SearchAllTask } from './search-all.task';
@@ -22,6 +23,7 @@ import { MovieStatusController } from './movie-status.controller';
     SettingsModule,
     LibraryModule,
     SearchModule,
+    RadarrModule,
   ],
   controllers: [ScheduleController, MovieStatusController],
   providers: [SchedulerService, SearchAllTask, ServerRepository],

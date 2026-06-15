@@ -9,3 +9,5 @@ export * from './realtime.dto';
 export * from './schedule.dto';
 export * from './movie-status.dto';
 export * from './notification.dto';
+export * from './radarr.dto';
+export * from './mislabeled.dto';
