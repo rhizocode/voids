@@ -173,10 +173,14 @@ export class TmdbClient {
    * Does not use the configured key (the candidate key is passed in).
    */
   async validateKey(apiKey: string): Promise<boolean> {
+    const timeoutMs = this.readTimeoutMs;
+    const controller = timeoutMs != null ? new AbortController() : undefined;
+    const timer =
+      controller != null ? setTimeout(() => controller.abort(), timeoutMs) : undefined;
     try {
       const res = await fetch(
         `${TMDB_BASE_URL}/authentication?api_key=${encodeURIComponent(apiKey)}`,
-        { method: 'GET', headers: { Accept: 'application/json' } },
+        { method: 'GET', headers: { Accept: 'application/json' }, signal: controller?.signal },
       );
       if (!res.ok) return false;
       const body = (await res.json()) as TmdbAuthResponse;
@@ -186,6 +190,8 @@ export class TmdbClient {
         `TMDB key validation failed: ${err instanceof Error ? err.message : String(err)}`,
       );
       return false;
+    } finally {
+      if (timer != null) clearTimeout(timer);
     }
   }
 

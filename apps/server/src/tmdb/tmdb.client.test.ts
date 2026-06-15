@@ -31,4 +31,9 @@ describe('TmdbClient.validateKey', () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
     expect(await new TmdbClient().validateKey('x')).toBe(false);
   });
+
+  it('returns false when the fetch is aborted due to timeout', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('The operation was aborted.', 'AbortError')));
+    expect(await new TmdbClient().validateKey('x')).toBe(false);
+  });
 });
