@@ -37,8 +37,8 @@ export const settingsSchema = z.object({
   tmdbApiKey: z.string().nullable(),
   schedule: scheduleConfigSchema,
   movieStatus: movieStatusIdSchema,
-  connectTimeoutMs: z.number().int(),
-  readTimeoutMs: z.number().int(),
+  connectTimeoutMs: z.number().int().positive(),
+  readTimeoutMs: z.number().int().positive(),
   authMode: authModeSchema,
   autoPushRadarr: z.boolean(),
   /** Radarr connection + defaults; null when Radarr is not configured. */
