@@ -14,6 +14,7 @@ import {
   jobProgressEventSchema,
   jobFinishedEventSchema,
   wsEnvelopeSchema,
+  searchJobSchema,
   type Movie,
   type SearchJob,
   type SearchJobStatus,
@@ -229,15 +230,21 @@ export function useJobProgress(jobId: number | null): UseJobProgress {
     };
   }, [jobId]);
 
-  // Polling fallback: poll job status while running, stop on terminal status.
+  // Polling fallback: only runs when the socket is NOT open, so it's a true
+  // fallback rather than double-work alongside a healthy WebSocket.
   useEffect(() => {
     if (jobId == null || state.finished) return;
     let cancelledPoll = false;
 
     async function poll() {
+      // Skip this tick while the socket is healthy — let it drive updates.
+      if (socketRef.current?.readyState === WebSocket.OPEN) return;
       try {
-        const job = await get<SearchJob>(`/search/${jobId}`);
-        if (!cancelledPoll) dispatch({ type: 'poll', job });
+        const raw = await get<unknown>(`/search/${jobId}`);
+        const parsed = searchJobSchema.safeParse(raw);
+        // A malformed body can't be trusted; stop the poller to avoid leaking.
+        if (!parsed.success) { cancelledPoll = true; clearInterval(timer); return; }
+        if (!cancelledPoll) dispatch({ type: 'poll', job: parsed.data });
       } catch {
         // Network blip — the interval will retry.
       }

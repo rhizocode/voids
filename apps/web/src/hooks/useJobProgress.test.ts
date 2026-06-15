@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { WS_EVENTS } from '@voids/shared';
 import { useJobProgress } from './useJobProgress';
+import * as client from '../api/client';
 
 // The polling fallback imports the api client dynamically; stub it so no real
 // fetch happens and the test stays deterministic.
@@ -167,5 +168,42 @@ describe('useJobProgress', () => {
     // Give microtasks a chance.
     await Promise.resolve();
     expect(MockWebSocket.instances.length).toBe(0);
+  });
+
+  it('does not call get while the socket is OPEN', async () => {
+    vi.useFakeTimers();
+    const getSpy = vi.spyOn(client, 'get');
+    renderHook(() => useJobProgress(1));
+    // Let the socket open (microtask fires onopen).
+    await act(async () => { await Promise.resolve(); });
+    // Socket is OPEN (readyState=1 by default in MockWebSocket).
+    expect(MockWebSocket.instances[0].readyState).toBe(MockWebSocket.OPEN);
+    // Advance past several poll intervals.
+    await act(async () => { vi.advanceTimersByTime(6000); await Promise.resolve(); });
+    expect(getSpy).not.toHaveBeenCalled();
+    vi.useRealTimers();
+    getSpy.mockRestore();
+  });
+
+  it('stops the poller when the poll response fails schema validation', async () => {
+    vi.useFakeTimers();
+    const getSpy = vi.spyOn(client, 'get').mockResolvedValue({ bad: 'body' } as unknown);
+    // Make socket NOT open so polling actually runs.
+    MockWebSocket.instances = [];
+    const { result } = renderHook(() => useJobProgress(1));
+    await act(async () => { await Promise.resolve(); });
+    const socket = MockWebSocket.instances[0];
+    // Simulate socket closed so polls are not gated.
+    socket.readyState = 3; // CLOSED
+    // Advance one interval to trigger a poll.
+    await act(async () => { vi.advanceTimersByTime(2100); await Promise.resolve(); });
+    const callCount = getSpy.mock.calls.length;
+    // No additional polls should fire after the malformed body.
+    await act(async () => { vi.advanceTimersByTime(4000); await Promise.resolve(); });
+    expect(getSpy.mock.calls.length).toBe(callCount);
+    // Hook should not be in finished state (no terminal dispatch from bad body — poller just stops).
+    expect(result.current.finished).toBe(false);
+    vi.useRealTimers();
+    getSpy.mockRestore();
   });
 });
