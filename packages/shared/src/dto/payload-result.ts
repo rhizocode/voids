@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { payloadCodeSchema } from '../enums/payload';
 
 /**
  * The shape returned by test/validation endpoints, mirroring Gaps' `Payload`
@@ -6,7 +7,7 @@ import { z } from 'zod';
  */
 export const payloadResultSchema = z
   .object({
-    code: z.number().int(),
+    code: payloadCodeSchema,
     reason: z.string(),
   })
   .passthrough();

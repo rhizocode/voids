@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { movieSchema } from '../domain/movie';
+import { payloadCodeSchema } from '../enums/payload';
 
 /**
  * WebSocket message envelope used over `/ws`. Both directions use the same
@@ -24,7 +25,7 @@ export type JobProgressEvent = z.infer<typeof jobProgressEventSchema>;
 /** server -> client: terminal job result. */
 export const jobFinishedEventSchema = z.object({
   jobId: z.number().int(),
-  payloadCode: z.number().int(),
+  payloadCode: payloadCodeSchema,
   reason: z.string().optional(),
 });
 export type JobFinishedEvent = z.infer<typeof jobFinishedEventSchema>;

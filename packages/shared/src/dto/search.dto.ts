@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { movieSchema } from '../domain/movie';
+import { payloadCodeSchema } from '../enums/payload';
 
 /**
  * A background search job's durable state. Timestamps are epoch-ms numbers in
@@ -47,7 +48,7 @@ export type RecommendedMovie = z.infer<typeof recommendedMovieSchema>;
 /** Result of scanning a library's owned movies. */
 export const scanResultSchema = z
   .object({
-    code: z.number().int(),
+    code: payloadCodeSchema,
     reason: z.string(),
     count: z.number().int(),
   })
