@@ -23,6 +23,12 @@ RUN pnpm install --frozen-lockfile
 # ---- build: compile shared, server, web ----
 FROM base AS build
 WORKDIR /app
+# Version string, derived from the git tag by scripts/release.sh and threaded in as
+# a build arg. Vite bakes it into the web bundle (__APP_VERSION__) at build time;
+# the server reads it from the environment at runtime (see runtime stage). Defaults
+# to "0.0.0-untagged" so an ad-hoc `docker build` still produces a sensible value.
+ARG APP_VERSION=0.0.0-untagged
+ENV APP_VERSION=${APP_VERSION}
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm -r build
@@ -35,7 +41,12 @@ RUN pnpm install --frozen-lockfile --prod
 # ---- runtime ----
 FROM node:22-slim AS runtime
 WORKDIR /app
+# Re-declare the build arg (ARGs don't cross stage boundaries) so the server can
+# report it from /api/version at runtime. Must match the value baked into the web
+# bundle in the build stage.
+ARG APP_VERSION=0.0.0-untagged
 ENV NODE_ENV=production \
+    APP_VERSION=${APP_VERSION} \
     DATA_DIR=/data \
     DATABASE_PATH=/data/voids.db \
     PORT=8484

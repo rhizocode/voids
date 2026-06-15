@@ -11,7 +11,6 @@ beforeEach(() => {
   vi.mocked(client.get).mockImplementation(async (path: string) => {
     if (path === '/settings') return fakeSettings as never;
     if (path === '/servers') return [] as never;
-    if (path === '/version') return { version: '0.1.0' } as never;
     throw new Error(`unexpected GET ${path}`);
   });
 });

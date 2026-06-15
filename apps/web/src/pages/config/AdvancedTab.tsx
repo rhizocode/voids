@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthMode, useNuke, useVersion } from '../../api/hooks';
+import { useAuthMode, useNuke } from '../../api/hooks';
 import {
   Button,
   Card,
@@ -22,7 +22,6 @@ function authModeLabel(mode: string | undefined): string {
 }
 
 export function AdvancedTab() {
-  const version = useVersion();
   const authMode = useAuthMode();
   const nuke = useNuke();
   const navigate = useNavigate();
@@ -52,9 +51,7 @@ export function AdvancedTab() {
         <dl className="mt-5 space-y-3 text-sm">
           <div className="flex items-center justify-between">
             <dt className="text-slate-400">Version</dt>
-            <dd className="font-mono text-slate-200">
-              {version.isLoading ? 'loading…' : (version.data?.version ?? 'unknown')}
-            </dd>
+            <dd className="font-mono text-slate-200">{__APP_VERSION__}</dd>
           </div>
           <div className="flex items-center justify-between">
             <dt className="text-slate-400">Authentication</dt>

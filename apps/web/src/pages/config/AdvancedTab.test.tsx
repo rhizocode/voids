@@ -17,7 +17,6 @@ vi.mock('react-router-dom', async (orig) => {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(client.get).mockImplementation((path: string) => {
-    if (path === '/version') return Promise.resolve({ version: '0.1.0' }) as never;
     if (path === '/auth/mode') return Promise.resolve({ mode: 'basic' }) as never;
     return Promise.reject(new Error(`unexpected GET ${path}`)) as never;
   });
@@ -27,10 +26,9 @@ describe('Advanced tab', () => {
   it('shows the version and auth mode', async () => {
     renderWithProviders(<AdvancedTab />);
 
-    await waitFor(() => {
-      expect(screen.getByText('0.1.0')).toBeInTheDocument();
-    });
-    expect(screen.getByText('Basic auth enabled')).toBeInTheDocument();
+    // Version is a build-time constant, rendered synchronously; auth mode is fetched.
+    expect(screen.getByText(__APP_VERSION__)).toBeInTheDocument();
+    expect(await screen.findByText('Basic auth enabled')).toBeInTheDocument();
   });
 
   it('requires typing NUKE before the wipe is enabled', async () => {

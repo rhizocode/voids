@@ -2,7 +2,13 @@ services:
   voids:
     # Build from this repo. To use a published image instead, comment out
     # `build` and set `image: ghcr.io/OWNER/voids:latest` (placeholder).
-    build: .
+    build:
+      context: .
+      args:
+        # Version shown in-app and at /api/version. Export APP_VERSION before
+        # `docker compose build` (scripts/release.sh does this from the git tag);
+        # otherwise the Dockerfile default ("0.0.0-untagged") is used.
+        APP_VERSION: ${APP_VERSION:-}
     image: voids:local
     container_name: voids
     ports:

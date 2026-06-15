@@ -1,9 +1,8 @@
-import { useAuthMode, useVersion } from '../api/hooks';
+import { useAuthMode } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import { Card } from '../components/ui';
 
 export function AboutPage() {
-  const version = useVersion();
   const authMode = useAuthMode();
 
   return (
@@ -28,10 +27,7 @@ export function AboutPage() {
           by Jason H House, used under the MIT License.
         </p>
         <p className="text-slate-400">
-          App version:{' '}
-          <span className="font-mono text-slate-200">
-            {version.isLoading ? 'loading…' : (version.data?.version ?? 'unknown')}
-          </span>
+          App version: <span className="font-mono text-slate-200">{__APP_VERSION__}</span>
         </p>
         <p className="text-slate-400">
           Authentication:{' '}

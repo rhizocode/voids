@@ -4,11 +4,14 @@ import { Controller, Get, Inject, ServiceUnavailableException } from '@nestjs/co
 import { DB } from '../db/db.module';
 import type { DbHandle } from '../db/client';
 
-// Server package version, read at module load. Resolve relative to this file so
-// it works from src (dev/test) and dist (production).
+// Single source of truth for the reported version: the release script derives it
+// from the git tag and passes it in via APP_VERSION. Fall back to the package.json
+// version (read at module load, resolved relative to this file so it works from src
+// in dev/test and dist in production) for untagged / local runs.
 const pkg = JSON.parse(
   readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8'),
 ) as { version: string };
+const appVersion = process.env.APP_VERSION ?? pkg.version;
 
 @Controller('api')
 export class HealthController {
@@ -26,6 +29,6 @@ export class HealthController {
 
   @Get('version')
   version(): { version: string } {
-    return { version: pkg.version };
+    return { version: appVersion };
   }
 }

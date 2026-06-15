@@ -53,7 +53,6 @@ import { get, post, put, patch, del } from './client';
 export const queryKeys = {
   settings: ['settings'] as const,
   servers: ['servers'] as const,
-  version: ['version'] as const,
   network: ['network'] as const,
   authMode: ['auth', 'mode'] as const,
   owned: (serverId: string, libraryKey: string) => ['owned', serverId, libraryKey] as const,
@@ -145,14 +144,6 @@ export function useSaveTmdbKey() {
   return useMutation({
     mutationFn: (body: TmdbKeyRequest) => post<TmdbKeyResponse>('/tmdb/key', body),
     onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.settings }),
-  });
-}
-
-/** GET /api/version */
-export function useVersion() {
-  return useQuery({
-    queryKey: queryKeys.version,
-    queryFn: () => get<{ version: string }>('/version'),
   });
 }
 

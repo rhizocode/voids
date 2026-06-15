@@ -1,6 +1,6 @@
 {
   "name": "@voids/server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "@voids/server — NestJS API and static host for the Voids web app.",
   "license": "MIT",
