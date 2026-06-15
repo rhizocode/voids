@@ -5,8 +5,11 @@
 import type {
   MediaServerView,
   Movie,
+  MovieStatusResponse,
   RecommendedMovie,
   RssFeedInfo,
+  ScheduleConfig,
+  SchedulePresetsResponse,
   SettingsResponse,
 } from '@voids/shared';
 
@@ -19,6 +22,23 @@ export const fakeSettings: SettingsResponse = {
   authMode: 'none',
   autoPushRadarr: false,
 };
+
+export const fakeSchedule: ScheduleConfig = {
+  enabled: true,
+  mode: 'preset',
+  presetId: 1,
+  cron: '0 0 4 * * ?',
+};
+
+export const fakeSchedulePresets: SchedulePresetsResponse = [
+  { id: 0, label: 'Hourly', cron: '0 49 * * * ?', enabled: true },
+  { id: 1, label: 'Daily', cron: '0 0 4 * * ?', enabled: true },
+  { id: 2, label: 'Weekly', cron: '0 0 4 * * MON', enabled: true },
+  { id: 3, label: 'Bi-weekly', cron: '0 0 4 1,15 * ?', enabled: true },
+  { id: 4, label: 'Monthly', cron: '0 0 4 1 * ?', enabled: true },
+];
+
+export const fakeMovieStatus: MovieStatusResponse = { id: 0, label: 'All' };
 
 export const fakeServers: MediaServerView[] = [
   {

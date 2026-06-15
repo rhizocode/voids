@@ -3,6 +3,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Card, Tab, TabList, TabPanel, Tabs } from '../components/ui';
 import { TmdbTab } from './config/TmdbTab';
 import { ServersTab } from './config/ServersTab';
+import { ScheduleTab } from './config/ScheduleTab';
 
 function LaterPhasePanel() {
   return (
@@ -34,7 +35,7 @@ export function ConfigPage() {
           <ServersTab />
         </TabPanel>
         <TabPanel value="schedule">
-          <LaterPhasePanel />
+          <ScheduleTab />
         </TabPanel>
         <TabPanel value="notifications">
           <LaterPhasePanel />

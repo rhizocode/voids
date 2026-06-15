@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { scheduleById } from '@voids/shared';
 import { useServers, useSettings } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
 import {
@@ -38,6 +39,15 @@ export function StatusPage() {
   const enabledMovieLibraries = movieLibraries.filter((l) => l.enabled);
 
   const loading = settings.isLoading || servers.isLoading;
+
+  const schedule = settings.data?.schedule;
+  const automationEnabled = Boolean(schedule?.enabled);
+  const scheduleLabel =
+    schedule == null
+      ? null
+      : schedule.mode === 'preset' && schedule.presetId != null
+        ? (scheduleById(schedule.presetId)?.label ?? 'Custom')
+        : 'Custom';
 
   return (
     <div>
@@ -80,6 +90,19 @@ export function StatusPage() {
               </span>
             </div>
             <CardDescription>enabled / total</CardDescription>
+          </StatCard>
+
+          <StatCard title="Automation">
+            {automationEnabled ? (
+              <Badge tone="success">Enabled</Badge>
+            ) : (
+              <Badge tone="warning">Disabled</Badge>
+            )}
+            <CardDescription>
+              {automationEnabled
+                ? `Scheduled searches: ${scheduleLabel}.`
+                : 'Automated searches are off. Enable them in Configuration.'}
+            </CardDescription>
           </StatCard>
         </div>
       )}

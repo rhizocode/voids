@@ -26,6 +26,12 @@ import type {
   UpdateRecommendationRequest,
   BulkUpdateRecommendationRequest,
   RssFeedListResponse,
+  ScheduleConfig,
+  UpdateScheduleRequest,
+  SchedulePresetsResponse,
+  ScheduleRunResponse,
+  MovieStatusResponse,
+  UpdateMovieStatusRequest,
 } from '@voids/shared';
 import { get, post, put, patch, del } from './client';
 
@@ -38,6 +44,9 @@ export const queryKeys = {
     ['recommended', serverId, libraryKey] as const,
   job: (jobId: number) => ['job', jobId] as const,
   rss: ['rss'] as const,
+  schedule: ['schedule'] as const,
+  schedulePresets: ['schedule', 'presets'] as const,
+  movieStatus: ['movieStatus'] as const,
 };
 
 /** GET /api/settings */
@@ -240,5 +249,65 @@ export function useRssFeeds() {
   return useQuery({
     queryKey: queryKeys.rss,
     queryFn: () => get<RssFeedListResponse>('/rss'),
+  });
+}
+
+/** GET /api/schedule — the current automation schedule config. */
+export function useSchedule() {
+  return useQuery({
+    queryKey: queryKeys.schedule,
+    queryFn: () => get<ScheduleConfig>('/schedule'),
+  });
+}
+
+/** GET /api/schedule/all — the built-in preset list (id, label, cron, enabled). */
+export function useSchedulePresets() {
+  return useQuery({
+    queryKey: queryKeys.schedulePresets,
+    queryFn: () => get<SchedulePresetsResponse>('/schedule/all'),
+  });
+}
+
+/**
+ * PUT /api/schedule — persist + re-arm the cron. The server normalizes the
+ * config (preset cron forced to match the preset), so we seed the cache with
+ * the returned effective config and invalidate `['schedule']`.
+ */
+export function useUpdateSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateScheduleRequest) => put<ScheduleConfig>('/schedule', body),
+    onSuccess: (data) => {
+      qc.setQueryData(queryKeys.schedule, data);
+      void qc.invalidateQueries({ queryKey: queryKeys.schedule });
+    },
+  });
+}
+
+/** POST /api/schedule/run — trigger a full search run now (202, fire-and-forget). */
+export function useRunScheduleNow() {
+  return useMutation({
+    mutationFn: () => post<ScheduleRunResponse>('/schedule/run'),
+  });
+}
+
+/** GET /api/movie-status — whether only released movies are recommended. */
+export function useMovieStatus() {
+  return useQuery({
+    queryKey: queryKeys.movieStatus,
+    queryFn: () => get<MovieStatusResponse>('/movie-status'),
+  });
+}
+
+/** PUT /api/movie-status — persist the movie-status (0 = all, 1 = released). */
+export function useUpdateMovieStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: UpdateMovieStatusRequest) =>
+      put<MovieStatusResponse>('/movie-status', body),
+    onSuccess: (data) => {
+      qc.setQueryData(queryKeys.movieStatus, data);
+      void qc.invalidateQueries({ queryKey: queryKeys.movieStatus });
+    },
   });
 }
