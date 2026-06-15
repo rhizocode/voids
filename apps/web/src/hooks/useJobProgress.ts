@@ -44,9 +44,9 @@ const TERMINAL: ReadonlySet<SearchJobStatus> = new Set([
 
 function payloadCodeToStatus(code: number): SearchJobStatus {
   // payloadCode 0=success, 1=cancelled, 2=failed (per brief §9 / WS contract).
+  if (code === 0) return 'succeeded';
   if (code === 1) return 'cancelled';
-  if (code === 2) return 'failed';
-  return 'succeeded';
+  return 'failed';
 }
 
 type Action =

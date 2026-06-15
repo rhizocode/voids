@@ -129,6 +129,24 @@ describe('useJobProgress', () => {
     expect(result.current.status).toBe('cancelled');
   });
 
+  it('maps payloadCode 2 -> failed', async () => {
+    const { result } = renderHook(() => useJobProgress(1));
+    await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
+    act(() => {
+      MockWebSocket.instances[0].emit(WS_EVENTS.JOB_FINISHED, { jobId: 1, payloadCode: 2 });
+    });
+    expect(result.current.status).toBe('failed');
+  });
+
+  it('maps unknown payloadCode -1 -> failed (not succeeded)', async () => {
+    const { result } = renderHook(() => useJobProgress(1));
+    await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
+    act(() => {
+      MockWebSocket.instances[0].emit(WS_EVENTS.JOB_FINISHED, { jobId: 1, payloadCode: -1 });
+    });
+    expect(result.current.status).toBe('failed');
+  });
+
   it('sends a job:cancel envelope over the socket', async () => {
     const { result } = renderHook(() => useJobProgress(7));
     await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
