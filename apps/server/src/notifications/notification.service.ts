@@ -59,16 +59,20 @@ export class NotificationService {
     }
 
     await Promise.all(
-      targets.map((cfg) =>
-        this.dispatch(cfg, type, level, title, body).catch((err: unknown) => {
+      targets.map((cfg) => {
+        const provider = this.byId.get(cfg.id);
+        if (provider && !provider.isEnabled(cfg.config as NotificationConfig)) {
+          return;
+        }
+        return this.dispatch(cfg, type, level, title, body).catch((err: unknown) => {
           // Catch per provider so one failure never breaks the others or the run.
           this.logger.warn(
             `Provider ${cfg.id} (${cfg.name}) failed to send ${type}: ${
               err instanceof Error ? err.message : String(err)
             }`,
           );
-        }),
-      ),
+        });
+      }),
     );
   }
 

@@ -114,6 +114,21 @@ describe('NotificationService fan-out', () => {
     expect(result.code).toBe(71);
   });
 
+  it('notify() skips an enabled-but-unconfigured provider without calling send', async () => {
+    repo.listEnabled.mockReturnValue([
+      cfg(NotificationProviderId.SLACK),
+      cfg(NotificationProviderId.DISCORD),
+    ]);
+    const slack = makeProvider(NotificationProviderId.SLACK);
+    const discord = { ...makeProvider(NotificationProviderId.DISCORD), isEnabled: () => false };
+    const svc = new NotificationService(repo as unknown as NotificationRepository, [slack, discord]);
+
+    await svc.notify('GAPS_MISSING_COLLECTIONS', 'info', 'T', 'B');
+
+    expect(slack.send).toHaveBeenCalledOnce();
+    expect(discord.send).not.toHaveBeenCalled();
+  });
+
   it('testAll() tests every enabled provider and tags each with its id', async () => {
     const enabled = [cfg(NotificationProviderId.SLACK), cfg(NotificationProviderId.DISCORD)];
     repo.listEnabled.mockReturnValue(enabled);
