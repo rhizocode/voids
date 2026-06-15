@@ -6,7 +6,7 @@
  */
 import { payloadResultSchema, type PayloadResult } from '@voids/shared';
 
-const BASE = '/api';
+const BASE = `${(import.meta.env.BASE_URL ?? '/').replace(/\/$/, '')}/api`;
 
 /** Error thrown for any non-2xx response. */
 export class ApiError extends Error {
