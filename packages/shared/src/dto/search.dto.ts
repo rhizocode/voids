@@ -27,14 +27,22 @@ export const searchJobSchema = z.object({
 });
 export type SearchJob = z.infer<typeof searchJobSchema>;
 
+/** The approval-workflow status of a recommendation. */
+export const recommendedMovieStatusSchema = z.enum([
+  'new',
+  'approved',
+  'rejected',
+  'ignored',
+]);
+export type RecommendedMovieStatus = z.infer<typeof recommendedMovieStatusSchema>;
+
 /** A discovered gap: the full `Movie` shape plus review/triage metadata. */
 export const recommendedMovieSchema = movieSchema.extend({
   id: z.number().int(),
-  status: z.enum(['new', 'approved', 'rejected', 'ignored']),
+  status: recommendedMovieStatusSchema,
   discoveredAt: z.number(),
 });
 export type RecommendedMovie = z.infer<typeof recommendedMovieSchema>;
-export type RecommendedMovieStatus = RecommendedMovie['status'];
 
 /** Result of scanning a library's owned movies. */
 export const scanResultSchema = z

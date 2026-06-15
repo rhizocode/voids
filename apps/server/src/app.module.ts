@@ -7,6 +7,7 @@ import { HealthModule } from './health/health.module';
 import { ConfigSettingsModule } from './config/config.module';
 import { LibraryModule } from './library/library.module';
 import { SearchModule } from './search/search.module';
+import { RssModule } from './rss/rss.module';
 import { RealtimeModule } from './realtime/realtime.module';
 
 // The built web SPA lives at apps/web/dist. Resolve relative to this file so it
@@ -21,6 +22,7 @@ const webRoot = join(__dirname, '..', '..', 'web', 'dist');
     ConfigSettingsModule,
     LibraryModule,
     SearchModule,
+    RssModule,
     RealtimeModule,
     ServeStaticModule.forRoot({
       rootPath: webRoot,

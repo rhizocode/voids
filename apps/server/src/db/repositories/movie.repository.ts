@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, notInArray } from 'drizzle-orm';
 import type { Movie, RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
 import { DB } from '../db.module';
 import type { DbHandle } from '../client';
@@ -179,5 +179,91 @@ export class MovieRepository {
       .orderBy(asc(recommendedMovies.collectionId), asc(recommendedMovies.discoveredAt))
       .all()
       .map(recRowToMovie);
+  }
+
+  /**
+   * Recommendations eligible for a feed: everything except `rejected` and
+   * `ignored` (i.e. `new` + `approved`), ordered by collection then discovery.
+   */
+  listRecommendedForFeed(serverId: string, libraryKey: string): RecommendedMovie[] {
+    return this.db
+      .select()
+      .from(recommendedMovies)
+      .where(
+        and(
+          eq(recommendedMovies.serverId, serverId),
+          eq(recommendedMovies.libraryKey, libraryKey),
+          notInArray(recommendedMovies.status, ['rejected', 'ignored']),
+        ),
+      )
+      .orderBy(asc(recommendedMovies.collectionId), asc(recommendedMovies.discoveredAt))
+      .all()
+      .map(recRowToMovie);
+  }
+
+  /** A single recommendation by its row id, or undefined if not found. */
+  findRecommended(id: number): RecommendedMovie | undefined {
+    const row = this.db
+      .select()
+      .from(recommendedMovies)
+      .where(eq(recommendedMovies.id, id))
+      .get();
+    return row ? recRowToMovie(row) : undefined;
+  }
+
+  /**
+   * Set a recommendation's approval status. Returns the updated row, or
+   * undefined when no row has that id.
+   */
+  updateRecommendedStatus(
+    id: number,
+    status: RecommendedMovieStatus,
+  ): RecommendedMovie | undefined {
+    if (!this.findRecommended(id)) return undefined;
+    this.db
+      .update(recommendedMovies)
+      .set({ status })
+      .where(eq(recommendedMovies.id, id))
+      .run();
+    return this.findRecommended(id);
+  }
+
+  /** Bulk status update; returns the number of rows actually changed. */
+  updateRecommendedStatusBulk(ids: number[], status: RecommendedMovieStatus): number {
+    if (ids.length === 0) return 0;
+    const existing = this.db
+      .select({ id: recommendedMovies.id })
+      .from(recommendedMovies)
+      .where(inArray(recommendedMovies.id, ids))
+      .all()
+      .map((r) => r.id);
+    if (existing.length === 0) return 0;
+    this.db
+      .update(recommendedMovies)
+      .set({ status })
+      .where(inArray(recommendedMovies.id, existing))
+      .run();
+    return existing.length;
+  }
+
+  /**
+   * Per-(serverId, libraryKey) count of feed-eligible recommendations
+   * (excludes `rejected`/`ignored`). Only libraries with at least one such
+   * recommendation appear.
+   */
+  feedCounts(): { serverId: string; libraryKey: string; count: number }[] {
+    return this.db
+      .select()
+      .from(recommendedMovies)
+      .where(notInArray(recommendedMovies.status, ['rejected', 'ignored']))
+      .all()
+      .reduce<{ serverId: string; libraryKey: string; count: number }[]>((acc, row) => {
+        const found = acc.find(
+          (e) => e.serverId === row.serverId && e.libraryKey === row.libraryKey,
+        );
+        if (found) found.count += 1;
+        else acc.push({ serverId: row.serverId, libraryKey: row.libraryKey, count: 1 });
+        return acc;
+      }, []);
   }
 }

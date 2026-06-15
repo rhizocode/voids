@@ -1,4 +1,14 @@
-import { Controller, Get, HttpCode, HttpStatus, NotFoundException, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import type {
   JobStatusResponse,
   RecommendedMovie,
@@ -7,6 +17,7 @@ import type {
 import { JobRunnerService } from './job-runner.service';
 import { SearchJobRepository } from '../db/repositories/search-job.repository';
 import { MovieRepository } from '../db/repositories/movie.repository';
+import { BulkUpdateRecommendationDto, UpdateRecommendationDto } from './dto';
 
 @Controller('api')
 export class SearchController {
@@ -53,5 +64,26 @@ export class SearchController {
     @Param('libraryKey') libraryKey: string,
   ): RecommendedMovie[] {
     return this.movies.listRecommended(serverId, libraryKey);
+  }
+
+  /**
+   * Bulk approval-workflow update. Declared BEFORE the `:itemId` route so the
+   * collection path (no id segment) is matched first.
+   */
+  @Patch('recommended')
+  updateManyStatus(@Body() body: BulkUpdateRecommendationDto): { updated: number } {
+    const updated = this.movies.updateRecommendedStatusBulk(body.ids, body.status);
+    return { updated };
+  }
+
+  /** Set a single recommendation's approval status. 404 if it does not exist. */
+  @Patch('recommended/:itemId')
+  updateStatus(
+    @Param('itemId') itemId: string,
+    @Body() body: UpdateRecommendationDto,
+  ): RecommendedMovie {
+    const updated = this.movies.updateRecommendedStatus(Number(itemId), body.status);
+    if (!updated) throw new NotFoundException(`No recommendation with id ${itemId}`);
+    return updated;
   }
 }

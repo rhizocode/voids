@@ -61,7 +61,7 @@ describe('mapJellyfinVirtualFolders', () => {
     expect(libs).toHaveLength(1);
     expect(libs[0]).toEqual({
       serverId: '',
-      key: 'f137a2dd21bbc1b99aa5c0f6bf02a805',
+      key: 'lib0000000000000000000000000000aa',
       title: 'Movies',
       type: 'movie',
       collectionType: 'movies',
