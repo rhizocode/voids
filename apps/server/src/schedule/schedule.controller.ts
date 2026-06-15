@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -18,6 +19,7 @@ import { SettingsService } from '../config/settings.service';
 import { SchedulerService } from './scheduler.service';
 import { SearchAllTask } from './search-all.task';
 import { UpdateScheduleDto } from './dto';
+import { quartzToCron } from './cron.util';
 
 /**
  * Schedule endpoints (brief §6/§10). The stored `settings.schedule` is the
@@ -46,6 +48,13 @@ export class ScheduleController {
   @Put()
   update(@Body() body: UpdateScheduleDto): ScheduleConfig {
     const resolved = resolveScheduleConfig(body as ScheduleConfig);
+    if (resolved.mode === 'custom') {
+      try {
+        quartzToCron(resolved.cron);
+      } catch (err) {
+        throw new BadRequestException(err instanceof Error ? err.message : 'Invalid cron expression');
+      }
+    }
     const updated = this.settings.update({ schedule: resolved });
     this.scheduler.reschedule();
     return updated.schedule;

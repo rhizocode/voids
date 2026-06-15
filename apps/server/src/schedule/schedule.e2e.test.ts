@@ -182,6 +182,14 @@ describe('Schedule + movie-status (e2e)', () => {
     expect(rescheduleSpy).toHaveBeenCalled();
   });
 
+  it('PUT /api/schedule rejects an invalid custom cron with 400', async () => {
+    await request(app.getHttpServer())
+      .put('/api/schedule')
+      .send({ enabled: true, mode: 'custom', presetId: null, cron: 'not a cron' })
+      .expect(400);
+    expect(rescheduleSpy).not.toHaveBeenCalled();
+  });
+
   it('GET /api/movie-status returns id+label and PUT persists', async () => {
     const initial = await request(app.getHttpServer()).get('/api/movie-status').expect(200);
     expect(initial.body).toEqual({ id: 1, label: 'Released' });
