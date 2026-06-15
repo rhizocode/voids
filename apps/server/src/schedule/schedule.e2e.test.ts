@@ -190,6 +190,22 @@ describe('Schedule + movie-status (e2e)', () => {
     expect(rescheduleSpy).not.toHaveBeenCalled();
   });
 
+  it('PUT /api/schedule rejects an unknown preset id with 400', async () => {
+    await request(app.getHttpServer())
+      .put('/api/schedule')
+      .send({ enabled: true, mode: 'preset', presetId: 99, cron: '0 0 4 * * ?' })
+      .expect(400);
+    expect(rescheduleSpy).not.toHaveBeenCalled();
+  });
+
+  it('PUT /api/schedule rejects preset mode with null presetId with 400', async () => {
+    await request(app.getHttpServer())
+      .put('/api/schedule')
+      .send({ enabled: true, mode: 'preset', presetId: null, cron: '0 0 4 * * ?' })
+      .expect(400);
+    expect(rescheduleSpy).not.toHaveBeenCalled();
+  });
+
   it('GET /api/movie-status returns id+label and PUT persists', async () => {
     const initial = await request(app.getHttpServer()).get('/api/movie-status').expect(200);
     expect(initial.body).toEqual({ id: 1, label: 'Released' });

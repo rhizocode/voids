@@ -47,7 +47,12 @@ export class ScheduleController {
    */
   @Put()
   update(@Body() body: UpdateScheduleDto): ScheduleConfig {
-    const resolved = resolveScheduleConfig(body as ScheduleConfig);
+    let resolved: ScheduleConfig;
+    try {
+      resolved = resolveScheduleConfig(body as ScheduleConfig);
+    } catch (err) {
+      throw new BadRequestException(err instanceof Error ? err.message : 'Invalid schedule config');
+    }
     if (resolved.mode === 'custom') {
       try {
         quartzToCron(resolved.cron);
