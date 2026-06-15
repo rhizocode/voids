@@ -61,6 +61,15 @@ describe('redactSecrets', () => {
     );
   });
 
+  it('does not redact benign /bot* path segments', () => {
+    expect(redactSecrets('https://host/robot')).toBe('https://host/robot');
+    expect(redactSecrets('https://host/api/bot-status')).toBe('https://host/api/bot-status');
+    expect(redactSecrets('/bots/list')).toBe('/bots/list');
+    expect(redactSecrets('https://cdn.example.com/img/bottom_banner.jpg')).toBe(
+      'https://cdn.example.com/img/bottom_banner.jpg',
+    );
+  });
+
   it('redacts Bearer / Basic credentials in strings', () => {
     expect(redactSecrets('Authorization: Bearer abc.def.ghi')).toContain(`Bearer ${REDACTED}`);
     expect(redactSecrets('Basic dXNlcjpwYXNz')).toBe(`Basic ${REDACTED}`);

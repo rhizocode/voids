@@ -69,8 +69,8 @@ function redactString(value: string): string {
     (_m, prefix: string) => `${prefix}${REDACTED}`,
   );
 
-  // Telegram-style bot token in path: /bot123456:ABC.../
-  out = out.replace(/\/bot[^/\s]+/gi, `/bot${REDACTED}`);
+  // Telegram-style bot token in path: /bot<digits>:<token>/
+  out = out.replace(/\/bot\d+:[A-Za-z0-9_-]+/g, `/bot${REDACTED}`);
 
   // Bearer / Basic credentials in an Authorization-style value.
   out = out.replace(/\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+/gi, `$1 ${REDACTED}`);
