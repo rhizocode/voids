@@ -1,0 +1,20 @@
+{
+  "id": 9799,
+  "title": "The Fast and the Furious",
+  "imdb_id": "tt0232500",
+  "status": "Released",
+  "release_date": "2001-06-22",
+  "overview": "Dominic Toretto is a Los Angeles street racer suspected of masterminding a series of big-rig hijackings.",
+  "poster_path": "/9799poster.jpg",
+  "backdrop_path": "/9799b.jpg",
+  "genres": [
+    { "id": 28, "name": "Action" },
+    { "id": 80, "name": "Crime" },
+    { "id": 53, "name": "Thriller" }
+  ],
+  "belongs_to_collection": {
+    "id": 9485,
+    "name": "The Fast and the Furious Collection",
+    "backdrop_path": "/z5A5W3WYJc3UVEWljSGwdjDgQ0j.jpg"
+  }
+}

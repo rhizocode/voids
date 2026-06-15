@@ -1,0 +1,31 @@
+{
+  "id": 9485,
+  "name": "The Fast and the Furious Collection",
+  "backdrop_path": "/z5A5W3WYJc3UVEWljSGwdjDgQ0j.jpg",
+  "parts": [
+    {
+      "id": 9799,
+      "title": "The Fast and the Furious",
+      "release_date": "2001-06-22",
+      "poster_path": "/9799poster.jpg",
+      "backdrop_path": "/9799b.jpg",
+      "overview": "Dominic Toretto is a Los Angeles street racer."
+    },
+    {
+      "id": 584,
+      "title": "2 Fast 2 Furious",
+      "release_date": "2003-06-05",
+      "poster_path": "/6nDZqOWoVqTcJ4dCSwEpD9P3df0.jpg",
+      "backdrop_path": "/584backdrop.jpg",
+      "overview": "It's a major double-cross."
+    },
+    {
+      "id": 584000,
+      "title": "Unreleased Furious",
+      "release_date": "",
+      "poster_path": null,
+      "backdrop_path": null,
+      "overview": "Not yet out."
+    }
+  ]
+}

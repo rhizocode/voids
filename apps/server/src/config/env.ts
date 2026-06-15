@@ -6,6 +6,8 @@ export interface AppEnv {
   dataDir: string;
   databasePath: string;
   baseUrl: string;
+  /** TMDB token-bucket sustained rate (requests/second). */
+  tmdbRateLimit: number;
 }
 
 export function loadEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -15,5 +17,7 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     ? resolve(env.DATABASE_PATH)
     : resolve(dataDir, 'voids.db');
   const baseUrl = env.BASE_URL ?? '/';
-  return { port, dataDir, databasePath, baseUrl };
+  const parsedRate = Number.parseInt(env.TMDB_RATE_LIMIT ?? '40', 10);
+  const tmdbRateLimit = Number.isNaN(parsedRate) || parsedRate <= 0 ? 40 : parsedRate;
+  return { port, dataDir, databasePath, baseUrl, tmdbRateLimit };
 }

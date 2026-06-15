@@ -5,6 +5,9 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { DbModule } from './db/db.module';
 import { HealthModule } from './health/health.module';
 import { ConfigSettingsModule } from './config/config.module';
+import { LibraryModule } from './library/library.module';
+import { SearchModule } from './search/search.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 // The built web SPA lives at apps/web/dist. Resolve relative to this file so it
 // works from src (dev) and dist (production: dist/app.module.js -> ../../web/dist).
@@ -16,6 +19,9 @@ const webRoot = join(__dirname, '..', '..', 'web', 'dist');
     DbModule,
     HealthModule,
     ConfigSettingsModule,
+    LibraryModule,
+    SearchModule,
+    RealtimeModule,
     ServeStaticModule.forRoot({
       rootPath: webRoot,
       // Keep API, WebSocket, and RSS routes out of the SPA fallback.

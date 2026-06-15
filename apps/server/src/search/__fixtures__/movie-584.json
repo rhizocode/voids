@@ -1,0 +1,19 @@
+{
+  "id": 584,
+  "title": "2 Fast 2 Furious",
+  "imdb_id": "tt0322259",
+  "status": "Released",
+  "release_date": "2003-06-05",
+  "overview": "It's a major double-cross when former police officer Brian O'Conner teams up with his ex-con buddy Roman Pearce.",
+  "poster_path": "/6nDZqOWoVqTcJ4dCSwEpD9P3df0.jpg",
+  "backdrop_path": "/584backdrop.jpg",
+  "genres": [
+    { "id": 28, "name": "Action" },
+    { "id": 80, "name": "Crime" }
+  ],
+  "belongs_to_collection": {
+    "id": 9485,
+    "name": "The Fast and the Furious Collection",
+    "backdrop_path": "/z5A5W3WYJc3UVEWljSGwdjDgQ0j.jpg"
+  }
+}
