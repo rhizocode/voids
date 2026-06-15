@@ -116,4 +116,30 @@ describe('SchedulerService', () => {
     await job.fireOnTick();
     expect((searchAll as unknown as { run: ReturnType<typeof vi.fn> }).run).toHaveBeenCalled();
   });
+
+  it('concurrent run() calls are serialised: second call skips while first is in flight', async () => {
+    let resolveFirst!: () => void;
+    const firstFinished = new Promise<void>((res) => {
+      resolveFirst = res;
+    });
+    const runMock = searchAll as unknown as { run: ReturnType<typeof vi.fn> };
+    runMock.run.mockReturnValueOnce(firstFinished);
+
+    const svc = build(PRESET_ENABLED);
+
+    // Start first run (does not resolve yet).
+    const first = svc.run();
+    // Second run should skip immediately.
+    await svc.run();
+
+    expect(runMock.run).toHaveBeenCalledTimes(1);
+
+    // Finish the first run.
+    resolveFirst();
+    await first;
+
+    // A third call after the first finishes should start a new run.
+    await svc.run();
+    expect(runMock.run).toHaveBeenCalledTimes(2);
+  });
 });

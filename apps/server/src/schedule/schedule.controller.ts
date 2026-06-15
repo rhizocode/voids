@@ -17,7 +17,6 @@ import {
 } from '@voids/shared';
 import { SettingsService } from '../config/settings.service';
 import { SchedulerService } from './scheduler.service';
-import { SearchAllTask } from './search-all.task';
 import { UpdateScheduleDto } from './dto';
 import { quartzToCron } from './cron.util';
 
@@ -31,7 +30,6 @@ export class ScheduleController {
   constructor(
     private readonly settings: SettingsService,
     private readonly scheduler: SchedulerService,
-    private readonly searchAll: SearchAllTask,
   ) {}
 
   /** Current schedule config. */
@@ -84,8 +82,9 @@ export class ScheduleController {
   @HttpCode(HttpStatus.ACCEPTED)
   run(): ScheduleRunResponse {
     // Fire-and-forget: do not await — the run proceeds headless via the job
-    // runner. Errors are logged inside the task.
-    void this.searchAll.run();
+    // runner. Errors are logged inside the task. The guard in SchedulerService
+    // prevents overlap with a concurrent scheduled or manual run.
+    void this.scheduler.run();
     return { started: true };
   }
 }

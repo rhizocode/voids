@@ -18,6 +18,7 @@ export const SEARCH_ALL_JOB = 'voids-search-all';
 @Injectable()
 export class SchedulerService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SchedulerService.name);
+  private running = false;
 
   constructor(
     private readonly registry: SchedulerRegistry,
@@ -90,15 +91,29 @@ export class SchedulerService implements OnApplicationBootstrap {
     }
   }
 
-  /** Cron tick handler: kick off a full run, never letting errors escape. */
-  private async runScheduled(): Promise<void> {
-    this.logger.log('Scheduled search-all triggered.');
+  /**
+   * Run `SearchAllTask` if no run is already in progress; otherwise log and
+   * skip. Used by both the cron tick and the manual `POST /api/schedule/run`.
+   */
+  async run(): Promise<void> {
+    if (this.running) {
+      this.logger.warn('Search-all already in progress — skipping.');
+      return;
+    }
+    this.running = true;
     try {
       await this.searchAll.run();
     } catch (err) {
       this.logger.error(
-        `Scheduled search-all failed: ${err instanceof Error ? err.message : String(err)}`,
+        `Search-all failed: ${err instanceof Error ? err.message : String(err)}`,
       );
+    } finally {
+      this.running = false;
     }
+  }
+
+  /** Cron tick handler: delegates to the guarded `run()`. */
+  private runScheduled(): void {
+    void this.run();
   }
 }
