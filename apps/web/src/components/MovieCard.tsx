@@ -3,17 +3,20 @@
  * `posterUrl` is null (owned movies frequently have no poster). Optional
  * `overview` snippet and status `badge` are used by the Recommended page.
  */
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Movie } from '@voids/shared';
 
 export function MoviePoster({ title, posterUrl }: { title: string; posterUrl: string | null }) {
-  if (posterUrl) {
+  const [failed, setFailed] = useState(false);
+  if (posterUrl && !failed) {
     return (
       <img
         src={posterUrl}
         alt={`${title} poster`}
         loading="lazy"
         className="aspect-[2/3] w-full rounded-md object-cover"
+        onError={() => setFailed(true)}
       />
     );
   }
