@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import type { ScheduleConfig } from '@voids/shared';
+import { loadEnv } from '../config/env';
 import { SettingsService } from '../config/settings.service';
 import { SearchAllTask } from './search-all.task';
 import { quartzToCron } from './cron.util';
@@ -62,6 +63,7 @@ export class SchedulerService implements OnApplicationBootstrap {
     try {
       const job = CronJob.from({
         cronTime: cron,
+        timeZone: loadEnv().timezone,
         onTick: () => {
           void this.runScheduled();
         },

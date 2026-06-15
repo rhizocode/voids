@@ -32,6 +32,8 @@ export interface AppEnv {
   authPassword?: string;
   /** TLS mode: `off` (plain HTTP, default) or `on` (self-signed cert in DATA_DIR). */
   tls: TlsModeEnv;
+  /** IANA timezone for cron job scheduling (default `UTC`). Maps to `TZ` env var. */
+  timezone: string;
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -56,6 +58,7 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
   const authPassword = env.AUTH_PASSWORD ? env.AUTH_PASSWORD : undefined;
 
   const tls: TlsModeEnv = env.TLS === 'on' ? 'on' : 'off';
+  const timezone = env.TZ ?? 'UTC';
 
   return {
     port,
@@ -68,5 +71,6 @@ export function loadEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     authUsername,
     authPassword,
     tls,
+    timezone,
   };
 }
