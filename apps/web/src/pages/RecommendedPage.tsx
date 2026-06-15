@@ -7,12 +7,13 @@
  * shown in a table — the Phase 2 run/cancel/progress flow is unchanged.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
+import type { RadarrPushResult, RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
 import {
   useRecommended,
   useStartSearch,
   useUpdateRecommendation,
   useBulkUpdateRecommendations,
+  usePushRadarr,
 } from '../api/hooks';
 import { useJobProgress } from '../hooks/useJobProgress';
 import { PageHeader } from '../components/PageHeader';
@@ -22,6 +23,7 @@ import { RecommendedTable } from '../components/RecommendedTable';
 import { ExportBar } from '../components/ExportBar';
 import { StatusBadge, StatusControls } from '../components/StatusControls';
 import { Button, Card, Label, Select, Spinner, useToast } from '../components/ui';
+import { ApiError } from '../api/client';
 
 type StatusFilter = 'default' | 'all' | RecommendedMovieStatus;
 
@@ -68,9 +70,14 @@ export function RecommendedPage() {
   const [jobId, setJobId] = useState<number | null>(null);
   const [filter, setFilter] = useState<StatusFilter>('default');
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [pushResults, setPushResults] = useState<RadarrPushResult[] | null>(null);
   const { toast } = useToast();
 
   const startSearch = useStartSearch();
+  const pushRadarr = usePushRadarr(
+    selection?.serverId ?? null,
+    selection?.libraryKey ?? null,
+  );
   const progress = useJobProgress(jobId);
   const recommended = useRecommended(selection?.serverId ?? null, selection?.libraryKey ?? null);
   const updateOne = useUpdateRecommendation(
@@ -156,6 +163,28 @@ export function RecommendedPage() {
     );
   };
 
+  const onPushRadarr = async () => {
+    if (!selection) return;
+    setPushResults(null);
+    try {
+      const res = await pushRadarr.mutateAsync();
+      if (!res.configured) {
+        toast('Configure Radarr first.', 'error');
+        return;
+      }
+      setPushResults(res.results);
+      const added = res.results.filter((r) => r.status === 'added').length;
+      const exists = res.results.filter((r) => r.status === 'exists').length;
+      const failed = res.results.filter((r) => r.status === 'failed').length;
+      toast(
+        `Added ${added}, already in Radarr ${exists}, failed ${failed}.`,
+        failed > 0 ? 'error' : 'success',
+      );
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : 'Push to Radarr failed.', 'error');
+    }
+  };
+
   const pct =
     progress.totalCount > 0
       ? Math.min(100, Math.round((progress.searchedCount / progress.totalCount) * 100))
@@ -177,6 +206,7 @@ export function RecommendedPage() {
             setSelection(s);
             setJobId(null);
             setSelected(new Set());
+            setPushResults(null);
           }}
         />
 
@@ -281,7 +311,18 @@ export function RecommendedPage() {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <ExportBar movies={filtered} filename={`voids-${selection.libraryKey}`} />
+            <div className="flex flex-wrap items-center gap-2">
+              <ExportBar movies={filtered} filename={`voids-${selection.libraryKey}`} />
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={onPushRadarr}
+                disabled={pushRadarr.isPending}
+              >
+                {pushRadarr.isPending && <Spinner />}
+                Push approved to Radarr
+              </Button>
+            </div>
             {activeSelection.size > 0 ? (
               <div className="flex items-center gap-2" aria-label="bulk actions">
                 <span className="text-sm text-slate-400">{activeSelection.size} selected</span>
@@ -306,6 +347,39 @@ export function RecommendedPage() {
               </div>
             ) : null}
           </div>
+
+          {pushResults != null ? (
+            <Card className="mb-4" aria-label="push to radarr results">
+              <h3 className="text-sm font-semibold text-slate-200">Push to Radarr results</h3>
+              {pushResults.length === 0 ? (
+                <p className="mt-1 text-sm text-slate-400">No approved gaps to push.</p>
+              ) : (
+                <ul className="mt-2 space-y-1 text-sm">
+                  {pushResults.map((r) => (
+                    <li key={`${r.tmdbId ?? r.title}`} className="flex items-center gap-2">
+                      <span
+                        className={
+                          r.status === 'failed'
+                            ? 'text-red-400'
+                            : r.status === 'added'
+                              ? 'text-emerald-400'
+                              : 'text-slate-400'
+                        }
+                      >
+                        {r.status === 'added'
+                          ? 'Added'
+                          : r.status === 'exists'
+                            ? 'Already in Radarr'
+                            : 'Failed'}
+                      </span>
+                      <span className="text-slate-200">{r.title}</span>
+                      {r.error ? <span className="text-xs text-red-400">— {r.error}</span> : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          ) : null}
 
           {filtered.length === 0 ? (
             <Card className="text-center text-sm text-slate-400">

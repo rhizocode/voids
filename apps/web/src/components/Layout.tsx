@@ -6,6 +6,7 @@ const navItems = [
   { to: '/config', label: 'Configuration' },
   { to: '/libraries', label: 'Libraries' },
   { to: '/recommended', label: 'Recommended' },
+  { to: '/mislabeled', label: 'Mislabeled' },
   { to: '/rss', label: 'RSS' },
   { to: '/about', label: 'About' },
 ];

@@ -3,7 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RecommendedPage } from './RecommendedPage';
 import { renderWithProviders } from '../test/render';
-import { fakeServers, fakeRecommended } from '../test/fixtures';
+import { fakeServers, fakeRecommended, fakeRadarrPushResults } from '../test/fixtures';
 import * as client from '../api/client';
 import * as jobHook from '../hooks/useJobProgress';
 import type { UseJobProgress } from '../hooks/useJobProgress';
@@ -140,6 +140,52 @@ describe('Recommended page', () => {
     await waitFor(() => {
       expect(client.post).toHaveBeenCalledWith('/search/server-1/lib-movies');
     });
+  });
+
+  it('Push approved to Radarr calls push-radarr and shows the summary', async () => {
+    vi.mocked(client.post).mockImplementation((path: string) => {
+      if (path.endsWith('/push-radarr')) {
+        return Promise.resolve({ configured: true, results: fakeRadarrPushResults }) as never;
+      }
+      return Promise.resolve(undefined as never);
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => screen.getByText('Fast Five'));
+    await user.click(screen.getByRole('button', { name: 'Push approved to Radarr' }));
+
+    await waitFor(() => {
+      expect(client.post).toHaveBeenCalledWith('/recommended/server-1/lib-movies/push-radarr');
+    });
+
+    // Toast summary: 2 added, 1 exists, 0 failed.
+    expect(await screen.findByText('Added 2, already in Radarr 1, failed 0.')).toBeInTheDocument();
+    // Inline result list.
+    const results = screen.getByLabelText('push to radarr results');
+    expect(results).toHaveTextContent('Fast Five');
+    expect(results).toHaveTextContent('Already in Radarr');
+  });
+
+  it('Push approved to Radarr toasts a config prompt when Radarr is unconfigured', async () => {
+    vi.mocked(client.post).mockImplementation((path: string) => {
+      if (path.endsWith('/push-radarr')) {
+        return Promise.resolve({ configured: false, results: [] }) as never;
+      }
+      return Promise.resolve(undefined as never);
+    });
+
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => screen.getByText('Fast Five'));
+    await user.click(screen.getByRole('button', { name: 'Push approved to Radarr' }));
+
+    expect(await screen.findByText('Configure Radarr first.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('push to radarr results')).not.toBeInTheDocument();
   });
 
   it('progress bar reflects a simulated useJobProgress state', async () => {

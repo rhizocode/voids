@@ -5,6 +5,7 @@ import { TmdbTab } from './config/TmdbTab';
 import { ServersTab } from './config/ServersTab';
 import { ScheduleTab } from './config/ScheduleTab';
 import { NotificationsTab } from './config/NotificationsTab';
+import { RadarrTab } from './config/RadarrTab';
 
 function LaterPhasePanel() {
   return (
@@ -25,6 +26,7 @@ export function ConfigPage() {
           <Tab value="servers">Media Servers</Tab>
           <Tab value="schedule">Schedule</Tab>
           <Tab value="notifications">Notifications</Tab>
+          <Tab value="radarr">Radarr</Tab>
           <Tab value="network">Network</Tab>
           <Tab value="advanced">Advanced</Tab>
         </TabList>
@@ -40,6 +42,9 @@ export function ConfigPage() {
         </TabPanel>
         <TabPanel value="notifications">
           <NotificationsTab />
+        </TabPanel>
+        <TabPanel value="radarr">
+          <RadarrTab />
         </TabPanel>
         <TabPanel value="network">
           <LaterPhasePanel />

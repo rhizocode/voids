@@ -4,9 +4,14 @@
  */
 import type {
   MediaServerView,
+  MislabeledItem,
   Movie,
   MovieStatusResponse,
   NotificationProviderConfig,
+  RadarrConfig,
+  RadarrPushResult,
+  RadarrQualityProfile,
+  RadarrRootFolder,
   RecommendedMovie,
   RssFeedInfo,
   ScheduleConfig,
@@ -48,6 +53,52 @@ export const fakeSchedulePresets: SchedulePresetsResponse = [
 ];
 
 export const fakeMovieStatus: MovieStatusResponse = { id: 0, label: 'All' };
+
+/** A fake, fully-populated Radarr config. NO real URL or key. */
+export const fakeRadarrConfig: RadarrConfig = {
+  url: 'http://radarr.example.test:7878',
+  apiKey: 'fake-radarr-key',
+  qualityProfileId: 2,
+  rootFolderPath: '/movies',
+  monitored: true,
+  minimumAvailability: 'released',
+  searchOnAdd: true,
+};
+
+/** Settings with a configured Radarr + auto-push on, for the Radarr tab. */
+export const fakeSettingsWithRadarr: SettingsResponse = {
+  ...fakeSettings,
+  autoPushRadarr: true,
+  radarr: fakeRadarrConfig,
+};
+
+export const fakeRadarrQualityProfiles: RadarrQualityProfile[] = [
+  { id: 1, name: 'Any' },
+  { id: 2, name: 'HD-1080p' },
+  { id: 3, name: 'Ultra-HD' },
+];
+
+export const fakeRadarrRootFolders: RadarrRootFolder[] = [
+  { path: '/movies', freeSpace: 123456789 },
+  { path: '/movies-4k', freeSpace: 987654321 },
+];
+
+export const fakeRadarrPushResults: RadarrPushResult[] = [
+  { tmdbId: 51497, title: 'Fast Five', status: 'added' },
+  { tmdbId: 168259, title: 'Furious 7', status: 'added' },
+  { tmdbId: 301528, title: 'Toy Story 4', status: 'exists' },
+];
+
+export const fakeMislabeled: MislabeledItem[] = [
+  { ownedTitle: 'The Matrx', tmdbTitle: 'The Matrix', year: 1999, tmdbId: 603, distance: 1 },
+  {
+    ownedTitle: 'Blade Runer 2049',
+    tmdbTitle: 'Blade Runner 2049',
+    year: 2017,
+    tmdbId: 335984,
+    distance: 1,
+  },
+];
 
 export const fakeServers: MediaServerView[] = [
   {

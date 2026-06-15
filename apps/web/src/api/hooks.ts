@@ -37,6 +37,12 @@ import type {
   UpdateNotificationRequest,
   TestResult,
   ProviderTestResult,
+  RadarrTestResponse,
+  RadarrMoviesResponse,
+  RadarrQualityProfilesResponse,
+  RadarrRootFoldersResponse,
+  RadarrPushResponse,
+  MislabeledResponse,
 } from '@voids/shared';
 import { get, post, put, patch, del } from './client';
 
@@ -53,6 +59,11 @@ export const queryKeys = {
   schedulePresets: ['schedule', 'presets'] as const,
   movieStatus: ['movieStatus'] as const,
   notifications: ['notifications'] as const,
+  radarrQualityProfiles: ['radarr', 'quality-profiles'] as const,
+  radarrRootFolders: ['radarr', 'root-folders'] as const,
+  radarrMovies: ['radarr', 'movies'] as const,
+  mislabeled: (serverId: string, libraryKey: string, threshold: number) =>
+    ['mislabeled', serverId, libraryKey, threshold] as const,
 };
 
 /** GET /api/settings */
@@ -357,5 +368,68 @@ export function useTestNotification(id: number) {
 export function useTestAll() {
   return useMutation({
     mutationFn: () => put<ProviderTestResult[]>('/notifications/test-all'),
+  });
+}
+
+/** PUT /api/radarr/test — connection test (160 ok / 161 fail / 162 not configured). */
+export function useTestRadarr() {
+  return useMutation({
+    mutationFn: () => put<RadarrTestResponse>('/radarr/test'),
+  });
+}
+
+/** GET /api/radarr/movies — movies currently in Radarr ([] if unconfigured). */
+export function useRadarrMovies(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.radarrMovies,
+    queryFn: () => get<RadarrMoviesResponse>('/radarr/movies'),
+    enabled,
+  });
+}
+
+/** GET /api/radarr/quality-profiles — populates the config selector ([] if unreachable). */
+export function useRadarrQualityProfiles(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.radarrQualityProfiles,
+    queryFn: () => get<RadarrQualityProfilesResponse>('/radarr/quality-profiles'),
+    enabled,
+  });
+}
+
+/** GET /api/radarr/root-folders — populates the config selector ([] if unreachable). */
+export function useRadarrRootFolders(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.radarrRootFolders,
+    queryFn: () => get<RadarrRootFoldersResponse>('/radarr/root-folders'),
+    enabled,
+  });
+}
+
+/**
+ * POST /api/recommended/:serverId/:libraryKey/push-radarr — push approved gaps
+ * to Radarr. Returns `{ configured, results }`; `configured:false` when Radarr
+ * is not set up.
+ */
+export function usePushRadarr(serverId: string | null, libraryKey: string | null) {
+  return useMutation({
+    mutationFn: () => post<RadarrPushResponse>(`/recommended/${serverId}/${libraryKey}/push-radarr`),
+  });
+}
+
+/**
+ * GET /api/mislabeled/:serverId/:libraryKey/:threshold — likely-mislabeled
+ * owned movies. Disabled by default (`enabled` controlled) since a cold-cache
+ * scan can be slow; the caller flips `enabled` to run on demand.
+ */
+export function useMislabeled(
+  serverId: string | null,
+  libraryKey: string | null,
+  threshold: number,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: queryKeys.mislabeled(serverId ?? '', libraryKey ?? '', threshold),
+    queryFn: () => get<MislabeledResponse>(`/mislabeled/${serverId}/${libraryKey}/${threshold}`),
+    enabled: enabled && Boolean(serverId) && Boolean(libraryKey),
   });
 }
