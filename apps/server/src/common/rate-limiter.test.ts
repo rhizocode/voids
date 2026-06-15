@@ -88,15 +88,19 @@ describe('fetchJson retry', () => {
       calls.push(Date.now());
       if (calls.length === 1) {
         return {
+          ok: false,
           status: 429,
           headers: { get: (h: string) => (h === 'retry-after' ? '2' : null) },
           json: async () => ({}),
+          text: async () => '{}',
         } as unknown as Response;
       }
       return {
+        ok: true,
         status: 200,
         headers: { get: () => null },
         json: async () => ({ ok: true }),
+        text: async () => '{"ok":true}',
       } as unknown as Response;
     });
 
@@ -120,9 +124,9 @@ describe('fetchJson retry', () => {
     const fetchImpl = vi.fn(async () => {
       n += 1;
       if (n < 3) {
-        return { status: 503, headers: { get: () => null }, json: async () => ({}) } as unknown as Response;
+        return { ok: false, status: 503, headers: { get: () => null }, json: async () => ({}), text: async () => '{}' } as unknown as Response;
       }
-      return { status: 200, headers: { get: () => null }, json: async () => ({ v: 1 }) } as unknown as Response;
+      return { ok: true, status: 200, headers: { get: () => null }, json: async () => ({ v: 1 }), text: async () => '{"v":1}' } as unknown as Response;
     });
 
     const promise = fetchJson<{ v: number }>(

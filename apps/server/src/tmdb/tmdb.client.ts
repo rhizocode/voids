@@ -214,10 +214,16 @@ export class TmdbClient {
     return TmdbClient.parseMovie(raw);
   }
 
-  /** `GET /collection/{collectionId}` — parsed; null on not-found (status_code 34). */
+  /** `GET /collection/{collectionId}` — parsed; null on not-found (404). */
   async getCollection(collectionId: number): Promise<TmdbCollection | null> {
-    const raw = await this.get<TmdbCollectionRaw>(`/collection/${collectionId}`, {});
-    if (raw.status_code === 34 || raw.id == null) return null;
+    let raw: TmdbCollectionRaw;
+    try {
+      raw = await this.get<TmdbCollectionRaw>(`/collection/${collectionId}`, {});
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('HTTP 404')) return null;
+      throw err;
+    }
+    if (raw.id == null) return null;
     return TmdbClient.parseCollection(raw);
   }
 

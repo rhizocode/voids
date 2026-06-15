@@ -178,6 +178,10 @@ export async function fetchJson<T>(
         await sleep(baseDelayMs * attempt);
         continue;
       }
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+      }
       return (await res.json()) as T;
     } catch (err) {
       if (attempt < maxRetries) {
