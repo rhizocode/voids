@@ -1,0 +1,14 @@
+services:
+  voids:
+    build: .
+    image: voids:dev
+    ports:
+      - '8484:8484'
+    volumes:
+      - ./data:/data
+    environment:
+      PORT: '8484'
+      DATA_DIR: /data
+      DATABASE_PATH: /data/voids.db
+      BASE_URL: /
+    restart: unless-stopped
