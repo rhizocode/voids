@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -35,7 +36,9 @@ export class SearchController {
   @Post('search/:jobId/cancel')
   @HttpCode(HttpStatus.OK)
   cancel(@Param('jobId') jobId: string): { ok: true } {
-    this.runner.requestCancel(Number(jobId));
+    const id = Number(jobId);
+    if (!Number.isInteger(id)) throw new BadRequestException(`Invalid jobId: ${jobId}`);
+    this.runner.requestCancel(id);
     return { ok: true };
   }
 

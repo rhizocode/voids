@@ -187,6 +187,10 @@ describe('Search pipeline (e2e)', () => {
     expect(recs.body[0].posterUrl).toContain('image.tmdb.org');
   });
 
+  it('cancel with non-numeric jobId returns 400', async () => {
+    await request(app.getHttpServer()).post('/api/search/abc/cancel').expect(400);
+  });
+
   it('cancel marks a job cancelled', async () => {
     // Cancel a freshly created job before it runs.
     const start = await request(app.getHttpServer())
