@@ -1,30 +1,44 @@
 /**
  * Recommended (Voids) page: run a gap search with a live progress bar driven by
- * `useJobProgress`, then browse the discovered gaps grouped by collection
- * (poster cards with collection backdrops) or as a table. Approve/reject/export
- * controls are Phase 3 — space is left for them but they are not built here.
+ * `useJobProgress`, then triage the discovered gaps. Phase 3 adds the approval
+ * workflow (Approve/Reject/Ignore/New per item, plus bulk actions), a status
+ * filter (rejected/ignored hidden by default since they persist across runs),
+ * and copy/export affordances. Results are grouped by collection (cards) or
+ * shown in a table — the Phase 2 run/cancel/progress flow is unchanged.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RecommendedMovie } from '@voids/shared';
-import { useRecommended, useStartSearch } from '../api/hooks';
+import type { RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
+import {
+  useRecommended,
+  useStartSearch,
+  useUpdateRecommendation,
+  useBulkUpdateRecommendations,
+} from '../api/hooks';
 import { useJobProgress } from '../hooks/useJobProgress';
 import { PageHeader } from '../components/PageHeader';
 import { LibrarySelector, type LibrarySelection } from '../components/LibrarySelector';
 import { MovieCard } from '../components/MovieCard';
-import { MoviesTable } from '../components/MoviesTable';
-import { Badge, Button, Card, Spinner, useToast } from '../components/ui';
+import { RecommendedTable } from '../components/RecommendedTable';
+import { ExportBar } from '../components/ExportBar';
+import { StatusBadge, StatusControls } from '../components/StatusControls';
+import { Button, Card, Label, Select, Spinner, useToast } from '../components/ui';
 
-function statusTone(status: RecommendedMovie['status']) {
-  switch (status) {
-    case 'approved':
-      return 'success' as const;
-    case 'rejected':
-      return 'danger' as const;
-    case 'ignored':
-      return 'neutral' as const;
-    default:
-      return 'info' as const;
-  }
+type StatusFilter = 'default' | 'all' | RecommendedMovieStatus;
+
+const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'default', label: 'New + Approved' },
+  { value: 'all', label: 'All' },
+  { value: 'new', label: 'New' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'ignored', label: 'Ignored' },
+];
+
+/** Whether a movie passes the active status filter. */
+function matchesFilter(movie: RecommendedMovie, filter: StatusFilter): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'default') return movie.status === 'new' || movie.status === 'approved';
+  return movie.status === filter;
 }
 
 interface CollectionGroup {
@@ -52,11 +66,21 @@ export function RecommendedPage() {
   const [selection, setSelection] = useState<LibrarySelection | null>(null);
   const [view, setView] = useState<'grid' | 'table'>('grid');
   const [jobId, setJobId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<StatusFilter>('default');
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   const startSearch = useStartSearch();
   const progress = useJobProgress(jobId);
   const recommended = useRecommended(selection?.serverId ?? null, selection?.libraryKey ?? null);
+  const updateOne = useUpdateRecommendation(
+    selection?.serverId ?? null,
+    selection?.libraryKey ?? null,
+  );
+  const updateMany = useBulkUpdateRecommendations(
+    selection?.serverId ?? null,
+    selection?.libraryKey ?? null,
+  );
 
   // Refetch results when the job finishes.
   const wasFinished = useRef(false);
@@ -87,19 +111,63 @@ export function RecommendedPage() {
     });
   };
 
-  const movies: RecommendedMovie[] = recommended.data ?? [];
-  const groups = useMemo(() => groupByCollection(movies), [movies]);
+  const allMovies: RecommendedMovie[] = recommended.data ?? [];
+  const filtered = useMemo(
+    () => allMovies.filter((m) => matchesFilter(m, filter)),
+    [allMovies, filter],
+  );
+  const groups = useMemo(() => groupByCollection(filtered), [filtered]);
+
+  // Keep selection scoped to currently-visible items.
+  const visibleIds = useMemo(() => new Set(filtered.map((m) => m.id)), [filtered]);
+  const activeSelection = useMemo(
+    () => new Set([...selected].filter((id) => visibleIds.has(id))),
+    [selected, visibleIds],
+  );
+
+  const toggleSelect = (id: number) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const setStatus = (id: number, status: RecommendedMovieStatus) => {
+    updateOne.mutate(
+      { itemId: id, status },
+      { onError: (err) => toast(err instanceof Error ? err.message : 'Update failed.', 'error') },
+    );
+  };
+
+  const bulkSet = (status: RecommendedMovieStatus) => {
+    const ids = [...activeSelection];
+    if (ids.length === 0) return;
+    updateMany.mutate(
+      { ids, status },
+      {
+        onSuccess: () => {
+          toast(`Set ${ids.length} item${ids.length === 1 ? '' : 's'} to ${status}.`, 'success');
+          setSelected(new Set());
+        },
+        onError: (err) =>
+          toast(err instanceof Error ? err.message : 'Bulk update failed.', 'error'),
+      },
+    );
+  };
 
   const pct =
     progress.totalCount > 0
       ? Math.min(100, Math.round((progress.searchedCount / progress.totalCount) * 100))
       : 0;
 
+  const mutating = updateOne.isPending || updateMany.isPending;
+
   return (
     <div>
       <PageHeader
         title="Recommended (Voids)"
-        subtitle="Run a search to find the missing entries in your collections."
+        subtitle="Run a search to find the missing entries in your collections, then approve or reject each gap."
       />
 
       <Card className="mb-6">
@@ -108,6 +176,7 @@ export function RecommendedPage() {
           onChange={(s) => {
             setSelection(s);
             setJobId(null);
+            setSelected(new Set());
           }}
         />
 
@@ -160,18 +229,39 @@ export function RecommendedPage() {
         <div className="flex items-center gap-2 text-slate-400">
           <Spinner /> Loading recommendations…
         </div>
-      ) : movies.length === 0 ? (
+      ) : allMovies.length === 0 ? (
         <Card className="text-center text-slate-400">
           <p className="text-slate-300">No gaps found yet.</p>
           <p className="mt-1 text-sm">Run a search to discover missing collection entries.</p>
         </Card>
       ) : (
         <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-100">
-              Recommended{' '}
-              <span className="text-sm font-normal text-slate-500">({movies.length})</span>
-            </h2>
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div className="flex items-end gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-100">
+                  Recommended{' '}
+                  <span className="text-sm font-normal text-slate-500">
+                    ({filtered.length}
+                    {filtered.length !== allMovies.length ? ` of ${allMovies.length}` : ''})
+                  </span>
+                </h2>
+              </div>
+              <div className="w-44">
+                <Label htmlFor="status-filter">Status filter</Label>
+                <Select
+                  id="status-filter"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as StatusFilter)}
+                >
+                  {FILTER_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
@@ -190,7 +280,38 @@ export function RecommendedPage() {
             </div>
           </div>
 
-          {view === 'grid' ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <ExportBar movies={filtered} filename={`voids-${selection.libraryKey}`} />
+            {activeSelection.size > 0 ? (
+              <div className="flex items-center gap-2" aria-label="bulk actions">
+                <span className="text-sm text-slate-400">{activeSelection.size} selected</span>
+                <Button
+                  size="sm"
+                  onClick={() => bulkSet('approved')}
+                  disabled={mutating}
+                >
+                  Approve selected
+                </Button>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => bulkSet('rejected')}
+                  disabled={mutating}
+                >
+                  Reject selected
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+                  Clear
+                </Button>
+              </div>
+            ) : null}
+          </div>
+
+          {filtered.length === 0 ? (
+            <Card className="text-center text-sm text-slate-400">
+              No recommendations match this filter.
+            </Card>
+          ) : view === 'grid' ? (
             <div className="space-y-8">
               {groups.map((group) => (
                 <section key={group.title}>
@@ -213,21 +334,42 @@ export function RecommendedPage() {
                       </span>
                     </h3>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                  <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     {group.movies.map((m) => (
-                      <MovieCard
-                        key={m.id}
-                        movie={m}
-                        showOverview
-                        badge={<Badge tone={statusTone(m.status)}>{m.status}</Badge>}
-                      />
+                      <div key={m.id} className="flex flex-col gap-2">
+                        <label className="flex items-center gap-2 text-xs text-slate-400">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${m.title}`}
+                            checked={activeSelection.has(m.id)}
+                            onChange={() => toggleSelect(m.id)}
+                          />
+                          select
+                        </label>
+                        <MovieCard
+                          movie={m}
+                          showOverview
+                          badge={<StatusBadge status={m.status} />}
+                        />
+                        <StatusControls
+                          movie={m}
+                          disabled={mutating}
+                          onSetStatus={(s) => setStatus(m.id, s)}
+                        />
+                      </div>
                     ))}
                   </div>
                 </section>
               ))}
             </div>
           ) : (
-            <MoviesTable data={movies} />
+            <RecommendedTable
+              data={filtered}
+              selected={activeSelection}
+              onToggleSelect={toggleSelect}
+              onSetStatus={setStatus}
+              mutationPending={mutating}
+            />
           )}
         </div>
       )}

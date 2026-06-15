@@ -53,6 +53,81 @@ describe('Recommended page', () => {
     expect(screen.getAllByText('new').length).toBeGreaterThanOrEqual(2);
   });
 
+  it('status filter hides and reveals items by status', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    // Default filter is New + Approved: Toy Story 4 (approved) is visible.
+    await waitFor(() => expect(screen.getByText('Fast Five')).toBeInTheDocument());
+    expect(screen.getByText('Toy Story 4')).toBeInTheDocument();
+
+    // Filter to New only -> approved Toy Story 4 disappears.
+    await user.selectOptions(screen.getByLabelText('Status filter'), 'new');
+    await waitFor(() => expect(screen.queryByText('Toy Story 4')).not.toBeInTheDocument());
+    expect(screen.getByText('Fast Five')).toBeInTheDocument();
+
+    // Filter to Approved only -> only Toy Story 4 remains.
+    await user.selectOptions(screen.getByLabelText('Status filter'), 'approved');
+    await waitFor(() => expect(screen.getByText('Toy Story 4')).toBeInTheDocument());
+    expect(screen.queryByText('Fast Five')).not.toBeInTheDocument();
+  });
+
+  it('clicking Approve calls the PATCH endpoint with approved status', async () => {
+    vi.mocked(client.patch).mockResolvedValue({ ...fakeRecommended[0], status: 'approved' } as never);
+
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => screen.getByText('Fast Five'));
+    await user.click(screen.getByRole('button', { name: 'Approve Fast Five' }));
+
+    await waitFor(() => {
+      expect(client.patch).toHaveBeenCalledWith('/recommended/1', { status: 'approved' });
+    });
+  });
+
+  it('Copy TMDB IDs writes the filtered ids to the clipboard', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => screen.getByText('Fast Five'));
+    await user.click(screen.getByRole('button', { name: 'Copy TMDB IDs' }));
+
+    await waitFor(() => {
+      // Default filter (New + Approved) => Fast Five 51497, Furious 7 168259, Toy Story 4 301528.
+      expect(writeText).toHaveBeenCalledWith('51497,168259,301528');
+    });
+  });
+
+  it('Export JSON triggers a client-side download', async () => {
+    const createObjectURL = vi.fn().mockReturnValue('blob:fake');
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => {});
+
+    const user = userEvent.setup();
+    renderWithProviders(<RecommendedPage />);
+    await selectLibrary(user);
+
+    await waitFor(() => screen.getByText('Fast Five'));
+    await user.click(screen.getByRole('button', { name: 'Export JSON' }));
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake');
+    clickSpy.mockRestore();
+  });
+
   it('clicking Run calls the start-search endpoint', async () => {
     vi.mocked(client.post).mockResolvedValue({ jobId: 42 } as never);
 

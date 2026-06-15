@@ -21,8 +21,13 @@ import type {
   StartSearchResponse,
   SearchJob,
   RecommendedResponse,
+  RecommendedMovie,
+  RecommendedMovieStatus,
+  UpdateRecommendationRequest,
+  BulkUpdateRecommendationRequest,
+  RssFeedListResponse,
 } from '@voids/shared';
-import { get, post, put, del } from './client';
+import { get, post, put, patch, del } from './client';
 
 export const queryKeys = {
   settings: ['settings'] as const,
@@ -32,6 +37,7 @@ export const queryKeys = {
   recommended: (serverId: string, libraryKey: string) =>
     ['recommended', serverId, libraryKey] as const,
   job: (jobId: number) => ['job', jobId] as const,
+  rss: ['rss'] as const,
 };
 
 /** GET /api/settings */
@@ -162,5 +168,77 @@ export function useRecommended(serverId: string | null, libraryKey: string | nul
     queryKey: queryKeys.recommended(serverId ?? '', libraryKey ?? ''),
     queryFn: () => get<RecommendedResponse>(`/recommended/${serverId}/${libraryKey}`),
     enabled: Boolean(serverId) && Boolean(libraryKey),
+  });
+}
+
+/**
+ * PATCH /api/recommended/:itemId — set one recommendation's approval status.
+ * Optimistically patches the cached list for the given library so the badge
+ * and filters update instantly, rolling back on error; always reconciles by
+ * invalidating `['recommended', serverId, libraryKey]` on settle.
+ */
+export function useUpdateRecommendation(serverId: string | null, libraryKey: string | null) {
+  const qc = useQueryClient();
+  const key = queryKeys.recommended(serverId ?? '', libraryKey ?? '');
+  return useMutation({
+    mutationFn: (vars: { itemId: number; status: RecommendedMovieStatus }) =>
+      patch<RecommendedMovie>(`/recommended/${vars.itemId}`, {
+        status: vars.status,
+      } satisfies UpdateRecommendationRequest),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<RecommendedResponse>(key);
+      if (previous) {
+        qc.setQueryData<RecommendedResponse>(
+          key,
+          previous.map((m) => (m.id === vars.itemId ? { ...m, status: vars.status } : m)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  });
+}
+
+/** PATCH /api/recommended (bulk) — apply one status to many ids at once. */
+export function useBulkUpdateRecommendations(
+  serverId: string | null,
+  libraryKey: string | null,
+) {
+  const qc = useQueryClient();
+  const key = queryKeys.recommended(serverId ?? '', libraryKey ?? '');
+  return useMutation({
+    mutationFn: (vars: { ids: number[]; status: RecommendedMovieStatus }) =>
+      patch<{ updated: number }>('/recommended', {
+        ids: vars.ids,
+        status: vars.status,
+      } satisfies BulkUpdateRecommendationRequest),
+    onMutate: async (vars) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<RecommendedResponse>(key);
+      if (previous) {
+        const ids = new Set(vars.ids);
+        qc.setQueryData<RecommendedResponse>(
+          key,
+          previous.map((m) => (ids.has(m.id) ? { ...m, status: vars.status } : m)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(key, ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  });
+}
+
+/** GET /api/rss — which library feeds exist (for the RSS page). */
+export function useRssFeeds() {
+  return useQuery({
+    queryKey: queryKeys.rss,
+    queryFn: () => get<RssFeedListResponse>('/rss'),
   });
 }

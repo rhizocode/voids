@@ -6,6 +6,7 @@ import type {
   MediaServerView,
   Movie,
   RecommendedMovie,
+  RssFeedInfo,
   SettingsResponse,
 } from '@voids/shared';
 
@@ -123,5 +124,22 @@ export const fakeRecommended: RecommendedMovie[] = [
     id: 3,
     status: 'approved',
     discoveredAt: 1700000002,
+  },
+];
+
+export const fakeRssFeeds: RssFeedInfo[] = [
+  {
+    serverId: 'server-1',
+    libraryKey: 'lib-movies',
+    title: 'Movies',
+    url: '/rss/server-1/lib-movies',
+    count: 3,
+  },
+  {
+    serverId: 'server-1',
+    libraryKey: 'lib-4k',
+    title: '4K Movies',
+    url: '/rss/server-1/lib-4k',
+    count: 1,
   },
 ];
