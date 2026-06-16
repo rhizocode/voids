@@ -1,21 +1,17 @@
 <?xml version="1.0"?>
 <!--
   Unraid Community Apps template for Voids.
-
-  NOTE: the <Repository> / <Registry> below use a PLACEHOLDER image name
-  (ghcr.io/OWNER/voids:latest). Replace OWNER with the real GitHub owner once
-  the image is published.
 -->
 <Container version="2">
   <Name>Voids</Name>
-  <Repository>ghcr.io/OWNER/voids:latest</Repository>
-  <Registry>https://ghcr.io/OWNER/voids</Registry>
+  <Repository>ghcr.io/rhizocode/voids:latest</Repository>
+  <Registry>https://ghcr.io/rhizocode/voids</Registry>
   <Network>bridge</Network>
   <MyIP/>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
   <Support/>
-  <Project>https://github.com/OWNER/voids</Project>
+  <Project>https://github.com/rhizocode/voids</Project>
   <Overview>
     Voids finds the gaps (voids) in your movie collections: you own a movie but
     are missing its sequels or other entries in the same collection. It scans

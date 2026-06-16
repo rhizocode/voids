@@ -74,10 +74,8 @@ A single image serves the API, the WebSocket, the RSS feeds, and the web UI on p
 docker run -d --name voids \
   -p 8484:8484 \
   -v ./data:/data \
-  ghcr.io/OWNER/voids:latest
+  ghcr.io/rhizocode/voids:latest
 ```
-
-> Replace `ghcr.io/OWNER/voids:latest` with the published image (placeholder).
 
 Then open <http://localhost:8484> and continue with the
 [configuration walkthrough](#configuration-walkthrough).
@@ -106,7 +104,7 @@ The image builds cleanly on both `linux/amd64` and `linux/arm64` (native deps li
 `better-sqlite3` resolve prebuilt binaries):
 
 ```bash
-docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/OWNER/voids:latest .
+docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/rhizocode/voids:latest .
 # add --push to publish to a registry
 ```
 

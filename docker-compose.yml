@@ -1,7 +1,7 @@
 services:
   voids:
     # Build from this repo. To use a published image instead, comment out
-    # `build` and set `image: ghcr.io/OWNER/voids:latest` (placeholder).
+    # `build` and set `image: ghcr.io/rhizocode/voids:latest`.
     build:
       context: .
       args:
