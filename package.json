@@ -1,6 +1,6 @@
 {
   "name": "voids",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Voids — a self-hosted service that finds the gaps in your Plex movie collections.",
   "license": "MIT",

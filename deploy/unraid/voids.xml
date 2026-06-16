@@ -48,6 +48,15 @@
           Description="Persistent data directory: SQLite database and any generated TLS certs."
           Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/voids</Config>
 
+  <!-- Run-as user/group. unRAID owns appdata as nobody:users (99:100); the
+       entrypoint chowns /data to these and drops privileges to match. -->
+  <Config Name="PUID" Target="PUID" Default="99"
+          Description="User ID the server runs as and owns /data. unRAID default is 99 (nobody)."
+          Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100"
+          Description="Group ID the server runs as and owns /data. unRAID default is 100 (users)."
+          Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+
   <!-- Optional: sub-path mount when behind a reverse proxy -->
   <Config Name="BASE_URL" Target="BASE_URL" Default="/"
           Description="Sub-path mount point when served behind a reverse proxy (default /)."

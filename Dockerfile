@@ -49,7 +49,15 @@ ENV NODE_ENV=production \
     APP_VERSION=${APP_VERSION} \
     DATA_DIR=/data \
     DATABASE_PATH=/data/voids.db \
-    PORT=8484
+    PORT=8484 \
+    PUID=1000 \
+    PGID=1000
+
+# gosu lets the entrypoint drop from root to the requested PUID:PGID after it has
+# fixed ownership of the bind-mounted /data volume.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends gosu \
+  && rm -rf /var/lib/apt/lists/*
 
 # Production node_modules (hoisted at the workspace root) incl. native better-sqlite3.
 COPY --from=prod-deps /app/node_modules ./node_modules
@@ -64,10 +72,12 @@ COPY --from=build /app/apps/server/package.json ./apps/server/package.json
 COPY --from=build /app/apps/server/drizzle ./apps/server/drizzle
 COPY --from=build /app/apps/web/dist ./apps/web/dist
 
-# Run as the unprivileged node user; ensure it can write the data volume.
-RUN mkdir -p /data && chown -R node:node /data /app
-USER node
+# Entrypoint chowns /data to PUID:PGID and drops privileges before running the
+# server. It starts as root (no `USER` line) so it can adjust the bind mount.
+COPY deploy/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /data
 
 VOLUME /data
 EXPOSE 8484
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "apps/server/dist/main.js"]

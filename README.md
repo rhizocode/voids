@@ -161,6 +161,8 @@ with placeholders.
 | `PORT`            | `8484`                 | HTTP(S) listen port.                                                                                                                          |
 | `DATA_DIR`        | `/data` (image), `./data` (local) | Persistent data directory: SQLite DB and generated TLS certs. A `VOLUME` in the image.                                             |
 | `DATABASE_PATH`   | `$DATA_DIR/voids.db`   | Explicit SQLite file path. Usually left unset (derived from `DATA_DIR`).                                                                      |
+| `PUID`            | `1000`                 | User ID the server runs as and that owns `/data`. The entrypoint chowns `/data` to it and drops privileges. Set to `99` on unRAID.            |
+| `PGID`            | `1000`                 | Group ID the server runs as. Set to `100` on unRAID (the `users` group). Pair with `PUID` so a bind-mounted `/data` is writable.              |
 | `BASE_URL`        | `/`                    | Sub-path mount point for serving behind a reverse proxy at a sub-path (e.g. `/voids`).                                                        |
 | `AUTH_MODE`       | `none`                 | `none` (open, for trusted LANs) or `basic` (HTTP Basic auth on the API + UI; `/rss/**` stays public).                                         |
 | `AUTH_USERNAME`   | `admin`                | Basic-auth username. Only used when `AUTH_MODE=basic`.                                                                                        |

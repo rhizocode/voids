@@ -18,6 +18,12 @@ services:
     environment:
       PORT: '8484'
       DATA_DIR: /data
+      # --- Run-as user/group ---
+      # The entrypoint chowns /data to PUID:PGID and drops privileges to match,
+      # so a bind-mounted ./data stays writable. Defaults to 1000:1000. On a NAS
+      # (e.g. unRAID) set these to the owner of the host directory — unRAID: 99/100.
+      # PUID: '1000'
+      # PGID: '1000'
       # Sub-path mount when served behind a reverse proxy (default "/").
       BASE_URL: /
       # --- Authentication (default: open, for trusted LANs) ---
