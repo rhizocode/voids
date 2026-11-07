@@ -92,7 +92,7 @@ export class JellyfinClient implements MediaSource {
   }
 
   /**
-   * Perform an authenticated GET with the API key in the `X-Emby-Token`
+   * Perform an authenticated GET with the API key in the `Authorization`
    * header (never a query param, to avoid leaking it in logs/URLs) and a
    * combined connect+read timeout via AbortController.
    */
@@ -106,7 +106,8 @@ export class JellyfinClient implements MediaSource {
       const res = await fetch(`${this.baseUrl(conn)}${path}`, {
         method: 'GET',
         headers: {
-          'X-Emby-Token': conn.token,
+          // Jellyfin 12 rejects the legacy X-Emby-Token header.
+          Authorization: `MediaBrowser Token="${conn.token}"`,
           Accept: 'application/json',
         },
         signal: controller.signal,

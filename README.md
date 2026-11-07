@@ -123,7 +123,7 @@ the container is up, open the UI and:
    - **URL / address** — e.g. `http://10.0.0.10`
    - **Port** — Jellyfin's default is `8096`
    - **API key** — create one in Jellyfin at **Dashboard → API Keys → +** (the key is
-     sent as the `X-Emby-Token` header; it is never logged).
+     sent in the `Authorization` header; it is never logged).
 
    Voids tests the connection and lists the server's libraries.
 3. **Enable a movie library.** From the server's libraries, enable the movie library you
