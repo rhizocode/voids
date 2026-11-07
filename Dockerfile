@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- base: install all workspace deps (with native build toolchain) ----
-FROM node:22-slim AS base
+FROM node:22.23.4-slim AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH="$PNPM_HOME:$PATH"
 # Run pnpm non-interactively (no TTY prompts for modules-dir purge, etc.).
@@ -39,7 +39,7 @@ WORKDIR /app
 RUN pnpm install --frozen-lockfile --prod
 
 # ---- runtime ----
-FROM node:22-slim AS runtime
+FROM node:22.23.4-slim AS runtime
 WORKDIR /app
 # Re-declare the build arg (ARGs don't cross stage boundaries) so the server can
 # report it from /api/version at runtime. Must match the value baked into the web
