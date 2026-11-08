@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, eq, inArray, notInArray, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Movie, RecommendedMovie, RecommendedMovieStatus } from '@voids/shared';
 import { DB } from '../db.module';
 import type { DbHandle } from '../client';
@@ -48,6 +48,10 @@ function recRowToMovie(row: RecommendedRow): RecommendedMovie {
     mediaItemId: null,
     mediaItemKey: null,
   };
+}
+
+function feedStatuses(includeNew: boolean): RecommendedMovieStatus[] {
+  return includeNew ? ['new', 'approved'] : ['approved'];
 }
 
 /** Repository for owned + recommended movies in a library. */
@@ -208,10 +212,14 @@ export class MovieRepository {
   }
 
   /**
-   * Recommendations eligible for a feed: everything except `rejected` and
-   * `ignored` (i.e. `new` + `approved`), ordered by collection then discovery.
+   * Recommendations eligible for a feed: `approved`, plus `new` when
+   * `includeNew` is set, ordered by collection then discovery.
    */
-  listRecommendedForFeed(serverId: string, libraryKey: string): RecommendedMovie[] {
+  listRecommendedForFeed(
+    serverId: string,
+    libraryKey: string,
+    includeNew: boolean,
+  ): RecommendedMovie[] {
     return this.db
       .select()
       .from(recommendedMovies)
@@ -219,7 +227,7 @@ export class MovieRepository {
         and(
           eq(recommendedMovies.serverId, serverId),
           eq(recommendedMovies.libraryKey, libraryKey),
-          notInArray(recommendedMovies.status, ['rejected', 'ignored']),
+          inArray(recommendedMovies.status, feedStatuses(includeNew)),
         ),
       )
       .orderBy(asc(recommendedMovies.collectionId), asc(recommendedMovies.discoveredAt))
@@ -312,11 +320,11 @@ export class MovieRepository {
   }
 
   /**
-   * Per-(serverId, libraryKey) count of feed-eligible recommendations
-   * (excludes `rejected`/`ignored`). Only libraries with at least one such
+   * Per-(serverId, libraryKey) count of feed-eligible recommendations (see
+   * `listRecommendedForFeed`). Only libraries with at least one such
    * recommendation appear.
    */
-  feedCounts(): { serverId: string; libraryKey: string; count: number }[] {
+  feedCounts(includeNew: boolean): { serverId: string; libraryKey: string; count: number }[] {
     return this.db
       .select({
         serverId: recommendedMovies.serverId,
@@ -324,7 +332,7 @@ export class MovieRepository {
         count: sql<number>`count(*)`,
       })
       .from(recommendedMovies)
-      .where(notInArray(recommendedMovies.status, ['rejected', 'ignored']))
+      .where(inArray(recommendedMovies.status, feedStatuses(includeNew)))
       .groupBy(recommendedMovies.serverId, recommendedMovies.libraryKey)
       .all()
       .map((r) => ({ ...r, count: Number(r.count) }));

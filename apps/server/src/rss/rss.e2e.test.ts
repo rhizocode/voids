@@ -10,6 +10,7 @@ import type { INestApplication } from '@nestjs/common';
 import { schema } from '../db/schema';
 import type { DbHandle } from '../db/client';
 import { DB } from '../db/db.module';
+import { SettingsService } from '../config/settings.service';
 import { MovieRepository } from '../db/repositories/movie.repository';
 import { ServerRepository } from '../db/repositories/server.repository';
 import { SearchJobRepository } from '../db/repositories/search-job.repository';
@@ -55,6 +56,7 @@ describe('RSS feed (e2e)', () => {
   let handle: DbHandle;
   let newId: number;
   let approvedId: number;
+  let settings: SettingsService;
 
   beforeEach(async () => {
     handle = makeHandle();
@@ -102,6 +104,7 @@ describe('RSS feed (e2e)', () => {
       controllers: [RssFeedController, RssController, SearchController],
       providers: [
         RssService,
+        SettingsService,
         MovieRepository,
         ServerRepository,
         SearchJobRepository,
@@ -112,6 +115,7 @@ describe('RSS feed (e2e)', () => {
       ],
     }).compile();
 
+    settings = moduleRef.get(SettingsService);
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ZodValidationPipe());
     await app.init();
@@ -122,9 +126,17 @@ describe('RSS feed (e2e)', () => {
     handle.sqlite.close();
   });
 
-  it('GET /rss/:s/:k returns only new+approved with exact keys and JSON content-type', async () => {
+  it('GET /rss/:s/:k returns only approved gaps by default, as JSON', async () => {
     const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${FEED_TOKEN}`).expect(200);
     expect(res.headers['content-type']).toContain('application/json');
+
+    const titles = res.body.map((i: { title: string }) => i.title);
+    expect(titles).toEqual(['Approved Movie']);
+  });
+
+  it('GET /rss/:s/:k returns new+approved with exact keys when rssIncludeNew is on', async () => {
+    settings.update({ rssIncludeNew: true });
+    const res = await request(app.getHttpServer()).get(`/rss/${SERVER}/${FEED_TOKEN}`).expect(200);
 
     const titles = res.body.map((i: { title: string }) => i.title).sort();
     expect(titles).toEqual(['Approved Movie', 'New Movie']);
@@ -187,7 +199,7 @@ describe('RSS feed (e2e)', () => {
       libraryKey: LIB,
       title: 'Movies',
       url: `/rss/${SERVER}/${FEED_TOKEN}`,
-      count: 2,
+      count: 1,
     });
   });
 

@@ -43,6 +43,8 @@ export const settingsSchema = z.object({
   readTimeoutMs: z.number().int().positive(),
   authMode: authModeSchema,
   autoPushRadarr: z.boolean(),
+  /** RSS feeds also carry unreviewed (`new`) gaps, not just approved ones. */
+  rssIncludeNew: z.boolean(),
   /** Radarr connection + defaults; null when Radarr is not configured. */
   radarr: radarrConfigSchema.nullable(),
 });

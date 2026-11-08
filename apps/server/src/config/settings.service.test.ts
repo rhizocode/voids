@@ -33,6 +33,7 @@ describe('SettingsService', () => {
     expect(s.movieStatus).toBe(1);
     expect(s.authMode).toBe('none');
     expect(s.autoPushRadarr).toBe(false);
+    expect(s.rssIncludeNew).toBe(false);
     expect(s.schedule.enabled).toBe(true);
     expect(s.schedule.mode).toBe('preset');
     expect(s.schedule.presetId).toBe(2);
@@ -41,10 +42,11 @@ describe('SettingsService', () => {
   });
 
   it('persists a partial update', () => {
-    service.update({ movieStatus: 0, autoPushRadarr: true });
+    service.update({ movieStatus: 0, autoPushRadarr: true, rssIncludeNew: true });
     const s = service.get();
     expect(s.movieStatus).toBe(0);
     expect(s.autoPushRadarr).toBe(true);
+    expect(s.rssIncludeNew).toBe(true);
   });
 
   it('updates the schedule config', () => {

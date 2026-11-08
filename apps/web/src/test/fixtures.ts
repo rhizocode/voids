@@ -34,6 +34,7 @@ export const fakeSettings: SettingsResponse = {
   readTimeoutMs: 30000,
   authMode: 'none',
   autoPushRadarr: false,
+  rssIncludeNew: false,
   radarr: null,
 };
 

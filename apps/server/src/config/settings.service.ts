@@ -51,6 +51,7 @@ export class SettingsService {
       readTimeoutMs: row.readTimeoutMs,
       authMode: (row.authMode as AuthMode) ?? 'none',
       autoPushRadarr: row.autoPushRadarr,
+      rssIncludeNew: row.rssIncludeNew,
       radarr: (row.radarr as RadarrConfig | null) ?? null,
     };
   }
@@ -104,6 +105,7 @@ export class SettingsService {
     if (partial.readTimeoutMs !== undefined) set.readTimeoutMs = partial.readTimeoutMs;
     if (partial.authMode !== undefined) set.authMode = partial.authMode;
     if (partial.autoPushRadarr !== undefined) set.autoPushRadarr = partial.autoPushRadarr;
+    if (partial.rssIncludeNew !== undefined) set.rssIncludeNew = partial.rssIncludeNew;
     if (partial.radarr !== undefined) set.radarr = partial.radarr;
 
     this.db.update(settingsTable).set(set).where(eq(settingsTable.id, SETTINGS_ID)).run();

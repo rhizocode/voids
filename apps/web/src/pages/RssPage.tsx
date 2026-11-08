@@ -2,13 +2,14 @@
  * RSS page: lists every library that has a feed-eligible recommendation (one
  * Card per `RssFeedInfo` from `GET /api/rss`). Each Card shows the library
  * title, item count, and the full absolute feed URL with Copy + external-link
- * affordances, plus a short Radarr explainer. Empty state links to Recommended.
+ * affordances, plus the "include unreviewed gaps" toggle that decides whether
+ * Radarr only gets approved gaps. Empty state links to Recommended.
  */
 import { Link } from 'react-router-dom';
 import type { RssFeedInfo } from '@voids/shared';
-import { useRssFeeds } from '../api/hooks';
+import { useRssFeeds, useSettings, useUpdateSettings } from '../api/hooks';
 import { PageHeader } from '../components/PageHeader';
-import { Button, Card, Spinner, useToast } from '../components/ui';
+import { Button, Card, Label, Spinner, Switch, useToast } from '../components/ui';
 
 /** Absolute feed URL (origin + the server-provided `/rss/...` path). */
 function absoluteUrl(feed: RssFeedInfo): string {
@@ -57,18 +58,49 @@ function FeedCard({ feed }: { feed: RssFeedInfo }) {
 
 export function RssPage() {
   const feeds = useRssFeeds();
+  const settings = useSettings();
+  const update = useUpdateSettings();
+  const { toast } = useToast();
+  const includeNew = settings.data?.rssIncludeNew ?? false;
+
+  const setIncludeNew = (rssIncludeNew: boolean) =>
+    update.mutate(
+      { rssIncludeNew },
+      {
+        onSuccess: () => void feeds.refetch(),
+        onError: () => toast('Could not save the feed setting.', 'error'),
+      },
+    );
 
   return (
     <div>
       <PageHeader
         title="RSS"
-        subtitle="Public JSON feeds of your approved gaps, ready to plug into Radarr."
+        subtitle="Public JSON feeds of your gaps, ready to plug into Radarr."
       />
 
       <Card className="mb-6 text-sm text-slate-400">
-        Add a feed URL to Radarr as a list (StevenLu / custom JSON list) to auto-import
-        approved gaps. Feeds are public (no auth) so Radarr can reach them, and exclude
-        anything you have rejected or ignored.
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <Label htmlFor="rss-include-new">Include unreviewed gaps</Label>
+            <p className="mt-1">
+              {includeNew
+                ? 'Automatic: feeds include every gap Voids finds unless you reject or ignore it, so Radarr adds new gaps without waiting for review.'
+                : 'Manual approval: feeds include only the gaps you approve on the Recommended page, so Radarr adds nothing until you approve it.'}
+            </p>
+          </div>
+          <Switch
+            id="rss-include-new"
+            aria-label="Include unreviewed gaps in feeds"
+            checked={includeNew}
+            disabled={settings.isLoading || update.isPending}
+            onCheckedChange={setIncludeNew}
+          />
+        </div>
+        <p className="mt-3">
+          Add a feed URL to Radarr as a list (StevenLu / custom JSON list). Feeds are public (no
+          auth) so Radarr can reach them.
+        </p>
       </Card>
 
       {feeds.isLoading ? (
@@ -81,11 +113,11 @@ export function RssPage() {
         <Card className="text-center text-slate-400">
           <p className="text-slate-300">No feeds yet.</p>
           <p className="mt-1 text-sm">
-            Feeds appear once a library has recommendations. Head to the{' '}
+            Feeds appear once a library has gaps to include. Head to the{' '}
             <Link to="/recommended" className="text-indigo-400 hover:underline">
               Recommended
             </Link>{' '}
-            page to run a search.
+            page to run a search or approve gaps.
           </p>
         </Card>
       ) : (

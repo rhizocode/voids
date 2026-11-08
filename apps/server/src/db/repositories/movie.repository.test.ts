@@ -42,6 +42,16 @@ const baseMovie = (overrides: Partial<Movie> = {}): Movie => ({
 });
 
 describe('MovieRepository.feedCounts', () => {
+  it('counts only approved gaps unless new ones are included', () => {
+    const repo = makeRepo();
+    repo.upsertRecommended(SERVER, 'lib-a', baseMovie({ tmdbId: 1 }));
+    repo.upsertRecommended(SERVER, 'lib-a', baseMovie({ tmdbId: 2 }));
+    const [row1] = repo.listRecommended(SERVER, 'lib-a');
+    repo.updateRecommendedStatus(row1.id, 'approved');
+    expect(repo.feedCounts(false)).toEqual([{ serverId: SERVER, libraryKey: 'lib-a', count: 1 }]);
+    expect(repo.feedCounts(true)).toEqual([{ serverId: SERVER, libraryKey: 'lib-a', count: 2 }]);
+  });
+
   it('returns per-library counts excluding rejected and ignored', () => {
     const repo = makeRepo();
     repo.upsertRecommended(SERVER, 'lib-a', baseMovie({ tmdbId: 1 }));
@@ -49,7 +59,7 @@ describe('MovieRepository.feedCounts', () => {
     repo.upsertRecommended(SERVER, 'lib-b', baseMovie({ tmdbId: 3 }));
     const [row1] = repo.listRecommended(SERVER, 'lib-a');
     repo.updateRecommendedStatus(row1.id, 'rejected');
-    const counts = repo.feedCounts();
+    const counts = repo.feedCounts(true);
     const a = counts.find((r) => r.libraryKey === 'lib-a');
     const b = counts.find((r) => r.libraryKey === 'lib-b');
     expect(a?.count).toBe(1);

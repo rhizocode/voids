@@ -46,8 +46,9 @@ credit retained. See [NOTICE](./NOTICE) and [LICENSE](./LICENSE).
 - **Approval workflow** — every recommendation has a status (`new` / `approved` /
   `rejected` / `ignored`). Triage in the UI; `rejected` / `ignored` are remembered across
   re-runs.
-- **RSS feed for Radarr** — a per-library JSON feed (`/rss/:serverId/:libraryKey`) that
-  Radarr can import as a list. Stays public even when auth is enabled.
+- **RSS feed for Radarr** — a per-library JSON feed (`/rss/:serverId/:feedToken`) that
+  Radarr can import as a list. Stays public even when auth is enabled. Carries only
+  approved gaps by default; turn on **Include unreviewed gaps** to send every gap.
 - **Push to Radarr** — push approved recommendations directly into Radarr, manually or
   automatically on scheduled runs.
 - **Cron scheduler** — built-in schedule presets plus a custom cron option; a scheduled
@@ -140,12 +141,16 @@ the container is up, open the UI and:
 8. **(Optional) Add the RSS feed to Radarr.** Each enabled library exposes a JSON feed at:
 
    ```
-   http://<voids-host>:8484/rss/<serverId>/<libraryKey>
+   http://<voids-host>:8484/rss/<serverId>/<feedToken>
    ```
 
    The exact URLs are listed on the **RSS** page in the UI. Add the URL to Radarr as a
    list. The `/rss/**` endpoints stay public even when auth is enabled, so Radarr can poll
    them without credentials.
+
+   By default a feed only lists the gaps you approve, so Radarr adds nothing until you
+   review it. To skip review, turn on **Include unreviewed gaps** on the RSS page: the feed
+   then lists every gap you have not rejected or ignored.
 
 ---
 

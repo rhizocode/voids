@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import type { RecommendedMovie, RssFeedInfo, RssItem } from '@voids/shared';
+import { SettingsService } from '../config/settings.service';
 import { MovieRepository } from '../db/repositories/movie.repository';
 import { ServerRepository } from '../db/repositories/server.repository';
 
@@ -18,6 +19,7 @@ export class RssService implements OnModuleInit {
   constructor(
     private readonly movies: MovieRepository,
     private readonly servers: ServerRepository,
+    private readonly settings: SettingsService,
   ) {}
 
   /** Ensure every library row has a feed token (backfill for existing installs). */
@@ -49,7 +51,7 @@ export class RssService implements OnModuleInit {
     const lib = this.servers.findLibraryByToken(serverId, feedToken);
     if (!lib) return [];
     return this.movies
-      .listRecommendedForFeed(serverId, lib.key)
+      .listRecommendedForFeed(serverId, lib.key, this.settings.get().rssIncludeNew)
       .map((m) => RssService.toRssItem(m));
   }
 
@@ -58,7 +60,7 @@ export class RssService implements OnModuleInit {
    * feed-eligible recommendation, with its resolved title and public URL.
    */
   listFeeds(): RssFeedInfo[] {
-    return this.movies.feedCounts().map(({ serverId, libraryKey, count }) => {
+    return this.movies.feedCounts(this.settings.get().rssIncludeNew).map(({ serverId, libraryKey, count }) => {
       const library = this.servers.findLibrary(serverId, libraryKey);
       const feedToken = this.servers.findFeedToken(serverId, libraryKey);
       return {
